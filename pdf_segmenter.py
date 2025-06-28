@@ -19,8 +19,12 @@ class PDFSegmenter:
         self.doc = None
         self.toc = []
         
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
+        # Get PDF name for subdirectory
+        self.pdf_name = Path(pdf_path).stem
+        
+        # Create output subdirectory
+        self.output_subdir = os.path.join(output_dir, self.pdf_name)
+        os.makedirs(self.output_subdir, exist_ok=True)
     
     def open_pdf(self):
         """Open the PDF file."""
@@ -78,9 +82,7 @@ class PDFSegmenter:
             return False
         
         print(f"\n🔄 Segmenting PDF into {len(self.toc)} sections...")
-        
-        # Get PDF name for file prefix
-        pdf_name = Path(self.pdf_path).stem
+        print(f"📁 Output directory: {self.output_subdir}")
         
         for i, (level, title, page) in enumerate(self.toc):
             # Determine end page (next TOC entry or end of document)
@@ -100,15 +102,15 @@ class PDFSegmenter:
             if section_text.strip():
                 # Create filename
                 clean_title = self.clean_filename(title)
-                filename = f"{pdf_name}_{clean_title}.txt"
-                filepath = os.path.join(self.output_dir, filename)
+                filename = f"{clean_title}.txt"
+                filepath = os.path.join(self.output_subdir, filename)
                 
                 # Save section
                 with open(filepath, 'w', encoding='utf-8') as f:
                     f.write(f"# {title}\n\n")
                     f.write(section_text)
                 
-                print(f"✅ Saved: {filename}")
+                print(f"✅ Saved: {self.pdf_name}/{filename}")
             else:
                 print(f"⚠️  No text extracted for: {title}")
         
@@ -117,8 +119,8 @@ class PDFSegmenter:
     def segment_by_pages(self, pages_per_section=10):
         """Segment PDF by page ranges when no TOC is available."""
         print(f"\n🔄 Segmenting PDF by pages ({pages_per_section} pages per section)...")
+        print(f"📁 Output directory: {self.output_subdir}")
         
-        pdf_name = Path(self.pdf_path).stem
         total_pages = len(self.doc)
         
         for start_page in range(0, total_pages, pages_per_section):
@@ -135,15 +137,15 @@ class PDFSegmenter:
             
             if section_text.strip():
                 # Create filename
-                filename = f"{pdf_name}_pages_{start_page + 1:03d}-{end_page + 1:03d}.txt"
-                filepath = os.path.join(self.output_dir, filename)
+                filename = f"pages_{start_page + 1:03d}-{end_page + 1:03d}.txt"
+                filepath = os.path.join(self.output_subdir, filename)
                 
                 # Save section
                 with open(filepath, 'w', encoding='utf-8') as f:
                     f.write(f"# Pages {start_page + 1}-{end_page + 1}\n\n")
                     f.write(section_text)
                 
-                print(f"✅ Saved: {filename}")
+                print(f"✅ Saved: {self.pdf_name}/{filename}")
             else:
                 print(f"⚠️  No text extracted for pages {start_page + 1}-{end_page + 1}")
         
@@ -186,7 +188,7 @@ def main():
             success = segmenter.segment_by_pages(args.pages_per_section)
         
         if success:
-            print(f"\n🎉 PDF segmentation complete! Check {args.output_dir} for output files.")
+            print(f"\n🎉 PDF segmentation complete! Check {segmenter.output_subdir} for output files.")
         else:
             print("\n❌ PDF segmentation failed.")
             return 1
