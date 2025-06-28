@@ -8,6 +8,7 @@ A Python-based tool for processing and cleaning up PDF documents using Ollama AI
 pdf_cleanup_agent/
 ├── agent.py              # Main processing script
 ├── agent_stream.py       # Streaming version for large documents
+├── pdf_segmenter.py      # PDF segmentation tool
 ├── hello_world.py        # Test script for Ollama connection
 ├── run_tests.py          # Test runner script
 ├── prompt.txt            # AI prompt template
@@ -15,7 +16,8 @@ pdf_cleanup_agent/
 │   ├── __init__.py
 │   ├── test_agent.py     # Tests for main agent
 │   ├── test_agent_stream.py  # Tests for streaming agent
-│   └── test_hello_world.py   # Tests for connectivity
+│   ├── test_hello_world.py   # Tests for connectivity
+│   └── test_pdf_segmenter.py # Tests for PDF segmentation
 ├── data/
 │   ├── txt_input/        # Input text files (gitignored)
 │   ├── pdf/              # Input PDF files (gitignored)
@@ -47,7 +49,32 @@ pdf_cleanup_agent/
 
 ## Usage
 
-1. Place your input text file in `data/txt_input/input.txt`
+### PDF Segmentation
+
+Segment RPG rulebooks into sections based on table of contents:
+
+```bash
+# Basic segmentation using TOC
+python pdf_segmenter.py data/pdf/your_rulebook.pdf
+
+# Custom output directory
+python pdf_segmenter.py data/pdf/your_rulebook.pdf --output-dir data/txt_input
+
+# Fallback to page-based segmentation (if no TOC)
+python pdf_segmenter.py data/pdf/your_rulebook.pdf --pages-per-section 15
+```
+
+The script will:
+- Extract the table of contents from your PDF
+- Split the PDF into sections based on TOC entries
+- Convert each section to text using PyMuPDF (works with most modern PDFs)
+- Save each section as a separate `.txt` file in `data/txt_input/`
+
+**Note:** This tool works best with PDFs that have embedded text (most modern PDFs). For scanned/image-only PDFs, you may need to use a different tool with OCR capabilities.
+
+### Text Processing
+
+1. Place your input text file in `data/txt_input/input.txt` (or use segmented files)
 2. Create a `prompt.txt` file with your AI instructions
 3. Run the processing script:
    ```bash
@@ -74,6 +101,7 @@ python run_tests.py
 python -m unittest tests.test_agent -v
 python -m unittest tests.test_agent_stream -v
 python -m unittest tests.test_hello_world -v
+python -m unittest tests.test_pdf_segmenter -v
 ```
 
 ### Test Coverage
@@ -83,6 +111,7 @@ The test suite covers:
 - ✅ File operations and directory creation
 - ✅ Text chunking and streaming functionality
 - ✅ Prompt processing and formatting
+- ✅ PDF segmentation functionality
 - ✅ Error scenarios and edge cases
 
 ### Continuous Integration
