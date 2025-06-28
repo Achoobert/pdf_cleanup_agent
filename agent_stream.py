@@ -1,9 +1,14 @@
 import requests
 import json
+import os
 
 OLLAMA_API = "http://localhost:11434/api/generate"
 MODEL = "deepseek-r1"  # or your preferred model
 CHUNK_SIZE = 3000  # Adjust as needed for your model/context
+
+# Ensure data directories exist
+os.makedirs("data/txt_input", exist_ok=True)
+os.makedirs("data/output", exist_ok=True)
 
 def chunk_text(text, size):
     # Split text into chunks of approximately 'size' characters, on paragraph boundaries if possible
@@ -31,7 +36,7 @@ def run_ollama_prompt_stream(prompt, chunk, append=False):
     ) as response:
         response.raise_for_status()
         mode = "a" if append else "w"
-        with open("output.md", mode, encoding="utf-8") as f:
+        with open("data/output/output.md", mode, encoding="utf-8") as f:
             for line in response.iter_lines():
                 if line:
                     data = json.loads(line)
@@ -40,7 +45,7 @@ def run_ollama_prompt_stream(prompt, chunk, append=False):
                     f.flush()  # Ensure it's written to disk immediately
 
 def main():
-    with open("input.txt", "r", encoding="utf-8") as f:
+    with open("data/txt_input/input.txt", "r", encoding="utf-8") as f:
         input_text = f.read()
     with open("prompt.txt", "r", encoding="utf-8") as f:
         prompt = f.read()
@@ -48,7 +53,7 @@ def main():
     for i, chunk in enumerate(chunks):
         print(f"Processing chunk {i+1}/{len(chunks)}...")
         run_ollama_prompt_stream(prompt, chunk, append=(i != 0))
-    print("✅ All chunks processed and saved to output.md (streamed)")
+    print("✅ All chunks processed and saved to data/output/output.md (streamed)")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,32 @@
+# Copyrighted content - exclude all txt, pdf, and markdown files
+*.txt
+*.pdf
+*.md
+
+# Keep directory structure by adding .gitkeep files
+!data/
+!data/markdown/
+!data/output/
+!data/pdf/
+!data/txt_input/
+
+# Virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
