@@ -1,6 +1,7 @@
 # PDF Cleanup Agent
 
-A Python-based tool for processing and cleaning up PDF documents using Ollama AI models.
+python scripts/pdf_process_pipeline.py <pdf_path>
+python scripts/postprocess_pipeline.py <markdown_dir>
 
 ## Project Structure
 
@@ -19,11 +20,10 @@ pdf_cleanup_agent/
 │   ├── test_hello_world.py   # Tests for connectivity
 │   └── test_pdf_segmenter.py # Tests for PDF segmentation
 ├── data/
-│   ├── txt_input/        # Input text files (gitignored)
-│   ├── pdf/              # Input PDF files (gitignored)
-│   ├── markdown/         # Input markdown files (gitignored)
-│   └── output/           # Generated output files (gitignored)
-└── venv/                 # Python virtual environment
+│   ├── txt_input/        # Input text files 
+│   ├── pdf/              # Input PDF files 
+│   ├── markdown/         # Input markdown files 
+│   └── output/           # Generated output files 
 ```
 
 ## Setup

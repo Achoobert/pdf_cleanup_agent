@@ -1,0 +1,39 @@
+# Data Order Configuration for Foundry VTT JSON
+# Defines the order of pages in journal entries
+
+# Default order for chapter_two_america
+chapter_two_america:
+  sort_order:
+    - beginning_steps.md
+    - preliminary_investigations.md
+    - meeting_erica_carlyle.md
+    - the_big_apple.md
+    - characters_and_monsters_america.md
+    - cult_in_residence.md
+    - harlem.md
+    - horror_at_ju_ju_house.md
+    - an_innocent_man.md
+    - other_inquiries.md
+    - conclusion.md
+    - dramatis_personae_america.md
+    - the_carlyle_expedition_principals.md
+  
+  name_mapping:
+    beginning_steps.md: "Beginning Steps"
+    preliminary_investigations.md: "Preliminary Investigations"
+    meeting_erica_carlyle.md: "Meeting Erica Carlyle"
+    the_big_apple.md: "The Big Apple"
+    characters_and_monsters_america.md: "Characters and Monsters: America"
+    cult_in_residence.md: "Cult in Residence"
+    harlem.md: "Harlem"
+    horror_at_ju_ju_house.md: "Horror at Ju-Ju House"
+    an_innocent_man.md: "An Innocent Man"
+    other_inquiries.md: "Other Inquiries"
+    conclusion.md: "Conclusion"
+    dramatis_personae_america.md: "Dramatis Personae: America"
+    the_carlyle_expedition_principals.md: "The Carlyle Expedition Principals"
+
+# Default order for other directories (fallback)
+default:
+  sort_order: []  # Will use alphabetical order
+  name_mapping: {}  # Will use filename-based names 

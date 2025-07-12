@@ -1,9 +1,24 @@
 # test whether ollama is up and working
 
 import requests
+import os
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+try:
+    from model_selector_cli_demo import load_user_selection
+except ImportError:
+    load_user_selection = None
 
 OLLAMA_API = "http://localhost:11434/api/generate"
-MODEL = "deepseek-r1"  # or whatever model you're running
+
+# Default model
+MODEL = "llama3:8b"
+
+# Try to load user selection
+if load_user_selection:
+    sel = load_user_selection()
+    if sel and sel.get('backend') == 'ollama' and sel.get('ollama_model'):
+        MODEL = sel['ollama_model']
 
 def test_ollama():
     try:

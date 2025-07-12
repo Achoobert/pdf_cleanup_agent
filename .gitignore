@@ -2,6 +2,8 @@
 *.txt
 *.pdf
 *.md
+config.yml
+.env
 
 # Keep directory structure by adding .gitkeep files
 !data/
@@ -30,3 +32,11 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Ignore everything in data/ except specific example files
+/data/*
+!/data/example.pdf
+!/data/example.md
+!/data/example.txt
+!/data/json/fvtt-JournalEntry-heading.json
+!/data/json/example.json

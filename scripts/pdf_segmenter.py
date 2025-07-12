@@ -7,9 +7,10 @@ Uses PyMuPDF for maximum portability.
 
 import os
 import re
-import fitz  # PyMuPDF
+import fitz
 from pathlib import Path
 import argparse
+import yaml
 
 
 class PDFSegmenter:
@@ -52,10 +53,46 @@ class PDFSegmenter:
                 indent = "  " * (level - 1)
                 print(f"{indent}• {title} (page {page})")
             
+            # Save TOC order to YAML file
+            self.save_toc_order()
+            
             return True
         except Exception as e:
             print(f"❌ Error extracting TOC: {e}")
             return False
+    
+    def save_toc_order(self):
+        """Save table of contents order to YAML file."""
+        try:
+            # Create data/yml directory if it doesn't exist
+            yml_dir = os.path.join('data', 'yml')
+            os.makedirs(yml_dir, exist_ok=True)
+            
+            # Use the input PDF's stem for the YAML filename
+            order_file = os.path.join(yml_dir, f'{self.pdf_name}-data-order.yml')
+            
+            # Prepare TOC data for YAML
+            toc_data = {
+                'pdf_name': self.pdf_name,
+                'toc_entries': []
+            }
+            
+            for level, title, page in self.toc:
+                toc_data['toc_entries'].append({
+                    'level': level,
+                    'title': title,
+                    'page': page,
+                    'filename': self.clean_filename(title)
+                })
+            
+            # Write YAML file
+            with open(order_file, 'w', encoding='utf-8') as f:
+                yaml.dump(toc_data, f, default_flow_style=False, indent=2, allow_unicode=True)
+            
+            print(f"📄 Saved TOC order to: {order_file}")
+            
+        except Exception as e:
+            print(f"❌ Error saving TOC order: {e}")
     
     def clean_filename(self, title):
         """Clean title for use as filename."""
@@ -63,6 +100,11 @@ class PDFSegmenter:
         clean = re.sub(r'[^\w\s-]', '', title)
         clean = re.sub(r'[-\s]+', '_', clean)
         clean = clean.lower().strip('_')
+        
+        # Truncate to reasonable length (max 50 characters)
+        if len(clean) > 50:
+            clean = clean[:50]
+        
         return clean
     
     def extract_text_from_page(self, page_num):
@@ -76,44 +118,68 @@ class PDFSegmenter:
             return ""
     
     def segment_by_toc(self):
-        """Segment PDF based on table of contents."""
+        """Segment PDF based on table of contents, using hierarchy for filenames."""
         if not self.toc:
             print("❌ No TOC available for segmentation")
             return False
         
         print(f"\n🔄 Segmenting PDF into {len(self.toc)} sections...")
         print(f"📁 Output directory: {self.output_subdir}")
-        
+
+        # Stack to keep track of the current path in the TOC hierarchy
+        toc_stack = []  # Each item: (level, title)
         for i, (level, title, page) in enumerate(self.toc):
+            # Maintain the stack to reflect the current hierarchy
+            while toc_stack and toc_stack[-1][0] >= level:
+                toc_stack.pop()
+            toc_stack.append((level, title))
+
             # Determine end page (next TOC entry or end of document)
             end_page = len(self.doc) - 1
             if i + 1 < len(self.toc):
                 end_page = self.toc[i + 1][2] - 1
-            
+
             print(f"\n📝 Processing: {title} (pages {page}-{end_page})")
-            
+
             # Extract text from page range
             section_text = ""
             for page_num in range(page - 1, min(end_page + 1, len(self.doc))):
                 page_text = self.extract_text_from_page(page_num)
                 if page_text:
                     section_text += f"\n\n--- Page {page_num + 1} ---\n\n{page_text}"
-            
+
             if section_text.strip():
-                # Create filename
-                clean_title = self.clean_filename(title)
-                filename = f"{clean_title}.txt"
-                filepath = os.path.join(self.output_subdir, filename)
-                
+                # Find the current chapter (level 1) in the stack
+                chapter = None
+                rest = []
+                for t in toc_stack:
+                    if t[0] == 1:
+                        chapter = t
+                        rest = []
+                    elif chapter:
+                        rest.append(t)
+                if chapter:
+                    chapter_dir = os.path.join(self.output_subdir, self.clean_filename(chapter[1]))
+                    os.makedirs(chapter_dir, exist_ok=True)
+                    if rest:
+                        filename = f"{'_'.join([self.clean_filename(t[1]) for t in rest])}.txt"
+                    else:
+                        filename = f"{self.clean_filename(chapter[1])}.txt"
+                    filepath = os.path.join(chapter_dir, filename)
+                else:
+                    # Fallback: no chapter found, use root output dir
+                    filename = f"{'_'.join([self.clean_filename(t[1]) for t in toc_stack])}.txt"
+                    filepath = os.path.join(self.output_subdir, filename)
+
                 # Save section
                 with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(f"# {title}\n\n")
+                    f.write(f"# {' > '.join([t[1] for t in toc_stack])}\n\n")
                     f.write(section_text)
-                
-                print(f"✅ Saved: {self.pdf_name}/{filename}")
+
+                print(f"✅ Saved: {os.path.relpath(filepath, self.output_dir)}")
             else:
                 print(f"⚠️  No text extracted for: {title}")
-        
+
         return True
     
     def segment_by_pages(self, pages_per_section=10):

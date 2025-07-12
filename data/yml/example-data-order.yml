@@ -1,0 +1,12 @@
+pdf_name: example
+toc_entries:
+- filename: heading
+  level: 1
+  page: 2
+  title: Heading
+- filename: drag_your_own_photos_onto_any_image_placeholders_i
+  level: 1
+  page: 2
+  title: Drag your own photos onto any image placeholders in this template, then crop
+    or resize them if you wish. To add an image caption, select the image and then
+    tap or click the Style tab in the Format controls.
