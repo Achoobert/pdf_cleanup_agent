@@ -84,7 +84,7 @@ def process_file(input_path, prompt):
 
 def main():
     import sys
-    
+    print("Running Agent Stream") 
     # Get input directory from command line argument, or use config default
     if len(sys.argv) > 1:
         input_dir = sys.argv[1]
