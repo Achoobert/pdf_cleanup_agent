@@ -4,11 +4,12 @@ UI Helper Utilities
 Common utility functions for UI operations.
 """
 
-from PyQt5.QtWidgets import QMessageBox, QWidget
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtCore import QUrl
 import os
+import logging
 from typing import Optional, Callable
 
 
@@ -20,58 +21,58 @@ class UIHelpers:
     @staticmethod
     def show_info_message(parent: QWidget, title: str, message: str):
         """
-        Show an information message box.
+        Log an information message instead of showing a pop-up.
         
         Args:
-            parent: Parent widget
-            title: Message box title
+            parent: Parent widget (unused, kept for compatibility)
+            title: Message title
             message: Message to display
         """
-        QMessageBox.information(parent, title, message)
+        logger = logging.getLogger(__name__)
+        logger.info(f"{title}: {message}")
         
     @staticmethod
     def show_error_message(parent: QWidget, title: str, message: str):
         """
-        Show an error message box.
+        Log an error message instead of showing a pop-up.
         
         Args:
-            parent: Parent widget
-            title: Message box title
+            parent: Parent widget (unused, kept for compatibility)
+            title: Error title
             message: Error message to display
         """
-        QMessageBox.critical(parent, title, message)
+        logger = logging.getLogger(__name__)
+        logger.error(f"{title}: {message}")
         
     @staticmethod
     def show_warning_message(parent: QWidget, title: str, message: str):
         """
-        Show a warning message box.
+        Log a warning message instead of showing a pop-up.
         
         Args:
-            parent: Parent widget
-            title: Message box title
+            parent: Parent widget (unused, kept for compatibility)
+            title: Warning title
             message: Warning message to display
         """
-        QMessageBox.warning(parent, title, message)
+        logger = logging.getLogger(__name__)
+        logger.warning(f"{title}: {message}")
         
     @staticmethod
     def show_question(parent: QWidget, title: str, message: str) -> bool:
         """
-        Show a yes/no question dialog.
+        Log a question and return a default response instead of showing a dialog.
         
         Args:
-            parent: Parent widget
+            parent: Parent widget (unused, kept for compatibility)
             title: Dialog title
-            message: Question to ask
+            message: Question message
             
         Returns:
-            True if user clicked Yes, False otherwise
+            False by default (safer default for most operations)
         """
-        reply = QMessageBox.question(
-            parent, title, message,
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        return reply == QMessageBox.Yes
+        logger = logging.getLogger(__name__)
+        logger.info(f"Question dialog (defaulting to No): {title}: {message}")
+        return False
         
     @staticmethod
     def open_file_in_system(file_path: str) -> bool:
