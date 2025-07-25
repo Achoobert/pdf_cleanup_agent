@@ -7,10 +7,11 @@ from PyQt5.QtCore import QTimer, QProcess, QUrl
 import yaml
 import requests
 import shutil
-
+from PyQt5.QtCore import Qt
+ollama_download_url = "https://ollama.com/download"
+llama3_url = "https://ollama.com/library/llama3:8b"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from model_selector import ModelSelector
-
 
 def run_hello_world():
     try:
@@ -93,6 +94,7 @@ def main():
     right_layout = QVBoxLayout()
     right_panel.setLayout(right_layout)
     main_layout.addWidget(right_panel, 2)
+    right_panel.setMaximumWidth(350)  # or whatever width you prefer
 
     # Move all existing controls to right_layout instead of window.layout()
     label = QLabel('Test llm status')
@@ -101,8 +103,6 @@ def main():
     right_layout.addWidget(btn)
     btn_stream = QPushButton('Run Stream')
     right_layout.addWidget(btn_stream)
-    btn_bob = QPushButton('Run bob')
-    right_layout.addWidget(btn_bob)
     model_select_btn = QPushButton('Model Selection')
     right_layout.addWidget(model_select_btn)
     label = QLabel('Run operations on your files')
@@ -110,8 +110,7 @@ def main():
     right_layout.addWidget(edit_prompt_btn)
     run_agent_btn = QPushButton('Process all PDFs')
     right_layout.addWidget(run_agent_btn)
-    stop_agent_btn = QPushButton('Stop agent_stream.py')
-    stop_agent_btn.setEnabled(False)
+    stop_agent_btn = QPushButton('Stop All')
     right_layout.addWidget(stop_agent_btn)
     reprocess_btn = QPushButton('Re-process Markdown with LLM')
     right_layout.addWidget(reprocess_btn)
@@ -156,7 +155,7 @@ def main():
         agent_process.start(venv_python, [script_path])
         if agent_process.waitForStarted(3000):
             add_logs('agent_stream.py started!')
-            stop_agent_btn.setEnabled(True)
+            # stop_agent_btn.setEnabled(True)
             run_agent_btn.setEnabled(False)
         else:
             add_logs("Failed to start agent_stream.py")
@@ -167,7 +166,7 @@ def main():
             if not agent_process.waitForFinished(3000):
                 agent_process.kill()
             QMessageBox.information(main_window, 'Agent', 'agent_stream.py stopped!')
-            stop_agent_btn.setEnabled(False)
+            # stop_agent_btn.setEnabled(False)
             run_agent_btn.setEnabled(True)
         else:
             QMessageBox.information(main_window, 'Agent', 'agent_stream.py is not running.')
@@ -176,7 +175,7 @@ def main():
     stop_agent_btn.clicked.connect(stop_agent_stream)
 
     def on_agent_finished():
-        stop_agent_btn.setEnabled(False)
+        # stop_agent_btn.setEnabled(False)
         run_agent_btn.setEnabled(True)
   #     QMessageBox.information(main_window, 'Agent', 'agent_stream.py finished.')
 
@@ -188,10 +187,6 @@ def main():
         output = run_hello_world()
         # QMessageBox.information(main_window, 'hello_world.py Output', output)
         add_logs(output)
-    def on_click_bob():
-        output = "Hi Bob"
-        # QMessageBox.information(main_window, 'hello_world.py Output', output)
-        add_logs(output)
 
     def new_logs(txt):
         log_text.setPlainText(txt)
@@ -199,7 +194,6 @@ def main():
         log_text.append(txt)
 
     btn.clicked.connect(on_click_hello)
-    btn_bob.clicked.connect(on_click_bob)
 
     def open_text_preview():
         preview_dialog = QDialog(main_window)
@@ -298,25 +292,83 @@ def main():
     edit_prompt_btn.clicked.connect(edit_llm_prompt)
 
     def reprocess_markdown():
-        # Let user select a markdown file
-        md_path, _ = QFileDialog.getOpenFileName(main_window, 'Select Markdown File', os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/markdown')), 'Markdown Files (*.md)')
-        if not md_path:
+        # Determine which markdown files to process
+        markdown_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/markdown'))
+        selected_items = pdf_list.selectedItems()
+        md_files = []
+        if selected_items:
+            # Process only markdown files for the selected PDF
+            pdf_name = selected_items[0].text()
+            pdf_stem = os.path.splitext(pdf_name)[0]
+            # Look for both <stem>.md and <stem>/*.md
+            single_md = os.path.join(markdown_dir, f'{pdf_stem}.md')
+            if os.path.exists(single_md):
+                md_files.append(single_md)
+            subdir = os.path.join(markdown_dir, pdf_stem)
+            if os.path.isdir(subdir):
+                for root, dirs, files in os.walk(subdir):
+                    for f in files:
+                        if f.endswith('.md'):
+                            md_files.append(os.path.join(root, f))
+        else:
+            # Process all markdown files in the directory and subdirectories
+            for root, dirs, files in os.walk(markdown_dir):
+                for f in files:
+                    if f.endswith('.md'):
+                        md_files.append(os.path.join(root, f))
+        if not md_files:
+            add_logs('No markdown files found to re-process.')
             return
-        # Run the reprocess script with QProcess
         reprocess_script = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../scripts/reprocess_markdown_with_llm.py'))
         venv_python = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../venv/bin/python'))
         if not os.path.exists(venv_python):
             venv_python = sys.executable
-        process = QProcess(main_window)
-        process.start(venv_python, [reprocess_script, md_path])
-        if process.waitForStarted(3000):
-            process.waitForFinished(-1)
-            if process.exitCode() == 0:
-                QMessageBox.information(main_window, 'Re-process', 'Markdown re-processed with LLM!')
-            else:
-                QMessageBox.critical(main_window, 'Re-process', 'Failed to re-process markdown.')
-        else:
-            QMessageBox.critical(main_window, 'Re-process', 'Failed to start re-processing script.')
+        # Use a QProcess to process each file sequentially and stream logs
+        reprocess_markdown.md_queue = list(md_files)
+        reprocess_markdown.venv_python = venv_python
+        reprocess_markdown.reprocess_script = reprocess_script
+        reprocess_markdown.process = QProcess(main_window)
+
+        def stream_process_output():
+            proc = reprocess_markdown.process
+            out = proc.readAllStandardOutput().data().decode(errors='replace')
+            if out:
+                add_logs(out.rstrip())
+            err = proc.readAllStandardError().data().decode(errors='replace')
+            if err:
+                add_logs('[stderr] ' + err.rstrip())
+
+        def process_next_md():
+            if not reprocess_markdown.md_queue:
+                add_logs('All markdown files re-processed.')
+                return
+            md_path = reprocess_markdown.md_queue.pop(0)
+            add_logs(f'Re-processing {os.path.basename(md_path)}...')
+            p = reprocess_markdown.process
+            try:
+                p.finished.disconnect()
+            except Exception:
+                pass
+            try:
+                p.readyReadStandardOutput.disconnect()
+            except Exception:
+                pass
+            try:
+                p.readyReadStandardError.disconnect()
+            except Exception:
+                pass
+            def on_finished(exitCode, exitStatus):
+                stream_process_output()
+                if exitCode == 0:
+                    add_logs(f'✅ Re-processed {os.path.basename(md_path)}')
+                else:
+                    add_logs(f'❌ Failed to re-process {os.path.basename(md_path)}')
+                process_next_md()
+            p.finished.connect(on_finished)
+            p.readyReadStandardOutput.connect(stream_process_output)
+            p.readyReadStandardError.connect(stream_process_output)
+            p.start(reprocess_markdown.venv_python, ['-u', reprocess_markdown.reprocess_script, md_path])
+        process_next_md()
 
     reprocess_btn.clicked.connect(reprocess_markdown)
 
@@ -351,6 +403,15 @@ def main():
         dialog = QDialog(main_window)
         dialog.setWindowTitle('Model Selection')
         dlg_layout = QVBoxLayout()
+        # Installation information
+        ollama_label = QLabel(
+            f'Install Ollama: <a href="{ollama_download_url}">{ollama_download_url}</a><br>'
+            f'Model: <a href="{llama3_url}">{llama3_url}</a>'
+        )
+        ollama_label.setTextFormat(Qt.RichText)
+        ollama_label.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        ollama_label.setOpenExternalLinks(True)
+        dlg_layout.addWidget(ollama_label)
         # Hardware info
         hw = selector.hardware_info
         dlg_layout.addWidget(QLabel(f"Platform: {hw['platform']} | CPU: {hw['cpu']} | RAM: {hw['ram_gb']} GB"))
@@ -465,11 +526,20 @@ def main():
         if not pdf_files:
             add_logs('No PDFs found in input directory.')
             return
-        # Use a list to queue PDFs
         preprocess_all_pdfs.pdf_queue = [os.path.join(pdf_dir, f) for f in pdf_files]
         preprocess_all_pdfs.venv_python = venv_python
         preprocess_all_pdfs.pipeline_script = pipeline_script
         preprocess_all_pdfs.process = QProcess(main_window)
+
+        def stream_process_output():
+            proc = preprocess_all_pdfs.process
+            out = proc.readAllStandardOutput().data().decode(errors='replace')
+            if out:
+                add_logs(out.rstrip())
+            err = proc.readAllStandardError().data().decode(errors='replace')
+            if err:
+                add_logs('[stderr] ' + err.rstrip())
+
         def process_next_pdf():
             if not preprocess_all_pdfs.pdf_queue:
                 add_logs('All PDFs processed.')
@@ -478,19 +548,56 @@ def main():
             fname = os.path.basename(pdf_path)
             add_logs(f'Processing {fname}...')
             p = preprocess_all_pdfs.process
-            p.finished.disconnect() if p.receivers(p.finished) else None
+            try:
+                p.finished.disconnect()
+            except Exception:
+                pass
+            try:
+                p.readyReadStandardOutput.disconnect()
+            except Exception:
+                pass
+            try:
+                p.readyReadStandardError.disconnect()
+            except Exception:
+                pass
             def on_finished(exitCode, exitStatus):
+                stream_process_output()  # flush any remaining output
                 if exitCode == 0:
                     add_logs(f'✅ Preprocessing complete for {fname}')
                 else:
                     add_logs(f'❌ Preprocessing failed for {fname}')
                 process_next_pdf()
             p.finished.connect(on_finished)
-            p.start(preprocess_all_pdfs.venv_python, [preprocess_all_pdfs.pipeline_script, pdf_path])
+            p.readyReadStandardOutput.connect(stream_process_output)
+            p.readyReadStandardError.connect(stream_process_output)
+            p.start(preprocess_all_pdfs.venv_python, ['-u', preprocess_all_pdfs.pipeline_script, pdf_path])
         process_next_pdf()
 
     run_agent_btn.clicked.disconnect()
     run_agent_btn.clicked.connect(preprocess_all_pdfs)
+
+    def stop_all_processing():
+        stopped_any = False
+        # Stop PDF processing
+        if hasattr(preprocess_all_pdfs, 'process') and preprocess_all_pdfs.process.state() != QProcess.NotRunning:
+            preprocess_all_pdfs.process.kill()
+            if hasattr(preprocess_all_pdfs, 'pdf_queue'):
+                preprocess_all_pdfs.pdf_queue.clear()
+            add_logs('PDF processing cancelled.')
+            stopped_any = True
+        # Stop markdown reprocessing
+        if hasattr(reprocess_markdown, 'process') and reprocess_markdown.process.state() != QProcess.NotRunning:
+            reprocess_markdown.process.kill()
+            if hasattr(reprocess_markdown, 'md_queue'):
+                reprocess_markdown.md_queue.clear()
+            add_logs('Markdown reprocessing cancelled.')
+            stopped_any = True
+        if stopped_any:
+            stop_agent_btn.setEnabled(False)
+        else:
+            add_logs('No processing to cancel.')
+
+    stop_agent_btn.clicked.connect(stop_all_processing)
 
     # --- Model & LLM Controls Group ---
     model_group = QGroupBox('Model & LLM Controls')
@@ -519,7 +626,6 @@ def main():
     misc_group.setLayout(misc_layout)
     misc_layout.addWidget(btn)
     misc_layout.addWidget(btn_stream)
-    misc_layout.addWidget(btn_bob)
     right_layout.addWidget(misc_group)
 
     right_layout.addWidget(stop_agent_btn)

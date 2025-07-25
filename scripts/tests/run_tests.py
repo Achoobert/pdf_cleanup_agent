@@ -13,9 +13,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def run_all_tests():
     """Discover and run all tests in the tests directory."""
-    # Discover tests in the tests directory
+    # Discover tests in the current directory
     loader = unittest.TestLoader()
-    start_dir = os.path.join(os.path.dirname(__file__), 'tests')
+    start_dir = os.path.dirname(__file__)
     suite = loader.discover(start_dir, pattern='test_*.py')
     
     # Run tests with verbose output

@@ -1,0 +1,269 @@
+name: Build and Release PDF Cleanup Agent
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Triggers on version tags like v1.0.0
+    branches:
+      - main
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  APP_NAME: "PDF Cleanup Agent"
+  APP_VERSION: "1.0.0"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: macos-latest
+            platform: macos
+            arch: x64
+          - os: macos-14
+            platform: macos
+            arch: arm64
+          - os: windows-latest
+            platform: windows
+            arch: x64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install system dependencies (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-glx \
+            libglib2.0-0 \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xfixes0
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Create self-signed certificate (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          # Create a self-signed certificate for code signing
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          
+          # Generate self-signed certificate
+          cat > cert.conf << EOF
+          [req]
+          distinguished_name = req_distinguished_name
+          req_extensions = v3_req
+          prompt = no
+          
+          [req_distinguished_name]
+          CN = PDF Cleanup Agent Developer
+          O = PDF Cleanup Agent
+          C = US
+          
+          [v3_req]
+          keyUsage = keyEncipherment, dataEncipherment, digitalSignature
+          extendedKeyUsage = codeSigning
+          EOF
+          
+          openssl req -new -x509 -days 365 -nodes -config cert.conf \
+            -keyout codesign.key -out codesign.crt
+          
+          # Import certificate to keychain
+          security import codesign.crt -k build.keychain -T /usr/bin/codesign
+          security import codesign.key -k build.keychain -T /usr/bin/codesign
+          
+          # Set certificate trust
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+          
+          # Find certificate identity
+          CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "PDF Cleanup Agent Developer" | head -1 | sed 's/.*) \(.*\) ".*/\1/')
+          echo "CERT_IDENTITY=$CERT_IDENTITY" >> $GITHUB_ENV
+
+      - name: Build executable
+        run: |
+          pyinstaller pdf_cleanup_agent.spec --noconfirm --clean
+
+      - name: Sign macOS app bundle
+        if: matrix.platform == 'macos'
+        run: |
+          if [ -n "$CERT_IDENTITY" ]; then
+            echo "Signing app bundle with identity: $CERT_IDENTITY"
+            codesign --force --deep --sign "$CERT_IDENTITY" "dist/PDF Cleanup Agent.app"
+            
+            # Verify signature
+            codesign --verify --deep --strict "dist/PDF Cleanup Agent.app"
+            spctl --assess --type exec "dist/PDF Cleanup Agent.app" || echo "Note: App may show security warning on first run"
+          else
+            echo "No certificate identity found, skipping code signing"
+          fi
+
+      - name: Create DMG (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          # Install create-dmg if not available
+          if ! command -v create-dmg &> /dev/null; then
+            brew install create-dmg
+          fi
+          
+          # Create DMG
+          create-dmg \
+            --volname "$APP_NAME" \
+            --volicon "assets/icon.icns" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "$APP_NAME.app" 200 190 \
+            --hide-extension "$APP_NAME.app" \
+            --app-drop-link 600 185 \
+            --hdiutil-quiet \
+            "$APP_NAME-$APP_VERSION-${{ matrix.platform }}-${{ matrix.arch }}.dmg" \
+            "dist/$APP_NAME.app" || true
+          
+          # Fallback: create simple DMG if create-dmg fails
+          if [ ! -f "$APP_NAME-$APP_VERSION-${{ matrix.platform }}-${{ matrix.arch }}.dmg" ]; then
+            echo "Creating simple DMG..."
+            hdiutil create -volname "$APP_NAME" -srcfolder "dist/$APP_NAME.app" -ov -format UDZO "$APP_NAME-$APP_VERSION-${{ matrix.platform }}-${{ matrix.arch }}.dmg"
+          fi
+
+      - name: Package executable (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          Compress-Archive -Path "dist\PDFCleanupAgent" -DestinationPath "$env:APP_NAME-$env:APP_VERSION-${{ matrix.platform }}-${{ matrix.arch }}.zip"
+        shell: powershell
+
+      - name: Package executable (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          cd dist
+          tar -czf "../$APP_NAME-$APP_VERSION-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz" PDFCleanupAgent/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            ${{ env.APP_NAME }}-${{ env.APP_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}.*
+          retention-days: 30
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || 'latest' }}
+          name: "${{ env.APP_NAME }} - ${{ github.ref_name || 'Latest Build' }}"
+          body: |
+            ## ${{ env.APP_NAME }} Release
+            
+            **Download for your platform:**
+            - **macOS (Intel)**: PDF-Cleanup-Agent-*-macos-x64.dmg
+            - **macOS (Apple Silicon)**: PDF-Cleanup-Agent-*-macos-arm64.dmg  
+            - **Windows**: PDF-Cleanup-Agent-*-windows-x64.zip
+            - **Linux**: PDF-Cleanup-Agent-*-linux-x64.tar.gz
+            
+            **Features:**
+            - Modern PyQt5 GUI with drag-and-drop PDF support
+            - LLM-powered PDF text cleaning and processing
+            - Support for multiple LLM backends (Ollama, Gemini)
+            - Real-time processing preview and control
+            - Customizable prompts and processing pipelines
+            - Cross-platform compatibility
+            
+            **macOS Installation:**
+            1. Download the appropriate DMG file for your Mac
+            2. Open the DMG and drag the app to Applications
+            3. On first run, you may need to right-click → Open to bypass Gatekeeper
+            
+            **Windows Installation:**
+            1. Download and extract the ZIP file
+            2. Run PDFCleanupAgent.exe
+            
+            **Linux Installation:**
+            1. Download and extract the tar.gz file
+            2. Run the PDFCleanupAgent executable
+            
+            **Note:** This build uses self-signed certificates for macOS. You may see a security warning on first launch.
+          files: |
+            ${{ env.APP_NAME }}-${{ env.APP_VERSION }}-*.*
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          make_latest: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-builds:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    if: github.event_name == 'pull_request'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}-*
+          merge-multiple: true
+
+      - name: Test executable (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -xzf PDF-Cleanup-Agent-*-linux-*.tar.gz
+          # Basic smoke test - check if executable exists and has correct permissions
+          ls -la PDFCleanupAgent/
+          file PDFCleanupAgent/PDFCleanupAgent
+
+      - name: Test executable (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          # Mount DMG and check app structure
+          if ls PDF-Cleanup-Agent-*-macos-*.dmg 1> /dev/null 2>&1; then
+            hdiutil attach PDF-Cleanup-Agent-*-macos-*.dmg
+            ls -la "/Volumes/PDF Cleanup Agent/"
+            file "/Volumes/PDF Cleanup Agent/PDF Cleanup Agent.app/Contents/MacOS/PDFCleanupAgent"
+            hdiutil detach "/Volumes/PDF Cleanup Agent/"
+          fi
+
+      - name: Test executable (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          Expand-Archive -Path "PDF-Cleanup-Agent-*-windows-*.zip" -DestinationPath "test"
+          Get-ChildItem -Path "test" -Recurse
+          Test-Path "test/PDFCleanupAgent/PDFCleanupAgent.exe"
+        shell: powershell

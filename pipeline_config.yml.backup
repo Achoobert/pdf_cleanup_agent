@@ -1,0 +1,29 @@
+# PDF Cleanup Agent Pipeline Configuration
+
+# Source PDF files and their processing order
+pdf_files:
+  - name: "example"
+    file: "data/pdf/example.pdf"
+    description: "Example PDF for testing pipeline"
+    priority: 1
+
+# Processing settings
+settings:
+  chunk_size: 4000
+  model: "llama3:8b"
+  ollama_api: "http://localhost:11434/api/generate"
+
+# Directory structure
+directories:
+  pdf_source: "data/pdf"
+  txt_output: "data/txt_input"
+  markdown_output: "data/markdown"
+  json_output: "data/json"
+
+# Processing steps
+steps:
+  1: "pdf_segmentation"
+  2: "llm_cleaning"
+  3: "post_processing_cleanup"
+  4: "post_processing_formatting"
+  5: "vtt_conversion" 
