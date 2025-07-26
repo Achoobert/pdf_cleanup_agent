@@ -1,0 +1,139 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf-power-converter"
+version = "1.0.0"
+description = "Convert PDFs to structured markdown using AI"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "PDF Power Converter Team", email = "contact@pdfpowerconverter.com"}
+]
+maintainers = [
+    {name = "PDF Power Converter Team", email = "contact@pdfpowerconverter.com"}
+]
+keywords = ["pdf", "converter", "markdown", "ai", "llm", "document", "processing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Office/Business :: Office Suites",
+    "Topic :: Text Processing :: Markup",
+    "Topic :: Utilities",
+    "Environment :: X11 Applications :: Qt",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "PyQt5>=5.15.0",
+    "PyPDF2>=3.0.0",
+    "pdfplumber>=0.9.0",
+    "openai>=1.0.0",
+    "anthropic>=0.7.0",
+    "tiktoken>=0.5.0",
+    "requests>=2.28.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
+    "colorlog>=6.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-qt>=4.2.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+build = [
+    "pyinstaller>=5.0.0",
+    "cx_Freeze>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/pdf-power-converter"
+Repository = "https://github.com/yourusername/pdf-power-converter"
+Documentation = "https://github.com/yourusername/pdf-power-converter/wiki"
+"Bug Reports" = "https://github.com/yourusername/pdf-power-converter/issues"
+Changelog = "https://github.com/yourusername/pdf-power-converter/blob/main/CHANGELOG.md"
+
+[project.scripts]
+pdf-power-converter = "main:main"
+ppc = "main:main"
+
+[tool.setuptools]
+package-dir = {"" = "scripts"}
+
+[tool.setuptools.packages.find]
+where = ["scripts"]
+
+[tool.setuptools.package-data]
+ui = ["icons/*.png", "styles/*.qss"]
+"*" = ["*.md", "*.txt", "*.yml", "*.yaml"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["scripts/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "PyQt5.*",
+    "pdfplumber.*",
+    "PyPDF2.*",
+]
+ignore_missing_imports = true

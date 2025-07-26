@@ -53,23 +53,9 @@ class PDFDropWidget(QListWidget):
         
     def _setup_styling(self):
         """Setup basic styling for the widget."""
-        self.setStyleSheet("""
-            QListWidget {
-                border: 2px dashed #cccccc;
-                border-radius: 5px;
-                background-color: #fafafa;
-                font-family: Arial, sans-serif;
-                font-size: 12px;
-                padding: 10px;
-            }
-            QListWidget:hover {
-                border-color: #999999;
-            }
-            QListWidget[dragActive="true"] {
-                border-color: #0078d4;
-                background-color: #f0f8ff;
-            }
-        """)
+        from ..styles.app_styles import get_app_styles
+        styles = get_app_styles()
+        styles.apply_drop_zone_style(self, active=False)
         
     def refresh_pdf_list(self):
         """Refresh the list of PDF files from the data/pdf directory."""

@@ -33,6 +33,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+/dist
 # Ignore everything in data/ except specific example files
 /data/*
 !/data/example.pdf

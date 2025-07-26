@@ -1,0 +1,82 @@
+# Build and Test Configuration
+
+# Build settings
+build:
+  platforms:
+    - source
+    - wheel
+    # - exe      # Uncomment to build executables
+    # - app      # Uncomment for macOS app bundles
+    # - appimage # Uncomment for Linux AppImages
+  
+  # PyInstaller settings for executable builds
+  pyinstaller:
+    onefile: true
+    windowed: true
+    name: "pdf-power-converter"
+    hidden_imports:
+      - "PyQt5.sip"
+    add_data:
+      - "scripts/ui/icons:ui/icons"
+      - "scripts/ui/styles:ui/styles"
+
+# Test settings
+test:
+  timeout: 300  # seconds
+  headless: true
+  
+  # Test categories to run
+  categories:
+    unit: true
+    integration: true
+    e2e_source: true
+    e2e_wheel: true
+    e2e_executable: false  # Only if executable built
+    performance: true
+    regression: true
+  
+  # Performance thresholds
+  performance_thresholds:
+    import_time: 5.0  # seconds
+    startup_time: 10.0  # seconds
+    memory_usage: 500  # MB
+  
+  # Regression detection
+  regression:
+    performance_threshold: 0.2  # 20% slower = regression
+    enabled: true
+
+# Watch mode settings
+watch:
+  debounce_seconds: 5
+  file_patterns:
+    - "*.py"
+  ignore_patterns:
+    - "__pycache__"
+    - "*.pyc"
+    - ".git"
+    - "dist"
+    - "build"
+
+# Reporting
+reporting:
+  output_file: "test_results.json"
+  human_report: "build_test_report.md"
+  log_file: "build_test.log"
+  
+  # Notification settings (for future use)
+  notifications:
+    slack_webhook: null
+    email: null
+    github_issues: false
+
+# Environment settings
+environment:
+  qt_platform: "offscreen"  # For headless testing
+  python_path_additions:
+    - "scripts"
+  
+  # Environment variables for testing
+  env_vars:
+    QT_QPA_PLATFORM: "offscreen"
+    PYTHONPATH: "scripts"

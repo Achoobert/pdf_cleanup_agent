@@ -14,6 +14,7 @@ import sys
 
 from .base_handler import BaseHandler
 from .process_handler import ProcessManager
+from ..utils.status_manager import StatusLevel
 
 
 @dataclass
@@ -109,10 +110,17 @@ class PDFHandler(BaseHandler):
     llm_processing_finished = pyqtSignal(str, bool)  # pdf_path, success
     processing_progress = pyqtSignal(str, int, str)  # pdf_path, step, description
     
+    # Enhanced progress signals
+    progress_started = pyqtSignal(str, str)  # progress_id, title
+    progress_updated = pyqtSignal(str, int, str)  # progress_id, current, message
+    progress_finished = pyqtSignal(str, bool, str)  # progress_id, success, message
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.process_manager: Optional[ProcessManager] = None
         self.processing_state = ProcessingState()
+        self.active_progress_ids: Dict[str, str] = {}  # process_id -> progress_id
+        self.status_manager = None  # Will be set by main window  # process_id -> progress_id
         
     def _setup(self):
         """Setup the PDF handler."""
@@ -124,6 +132,15 @@ class PDFHandler(BaseHandler):
         self.process_manager.process_output.connect(self._on_process_output)
         self.process_manager.process_error.connect(self._on_process_error)
         self.process_manager.error_occurred.connect(self._on_handler_error)
+    
+    def set_status_manager(self, status_manager):
+        """
+        Set the status manager for enhanced progress tracking.
+        
+        Args:
+            status_manager: StatusManager instance
+        """
+        self.status_manager = status_manager
         
     def handle_pdf_drop(self, pdf_path: str) -> bool:
         """
@@ -259,6 +276,11 @@ class PDFHandler(BaseHandler):
                 self.processing_progress.emit(pdf_path, 1, "PDF segmentation started")
                 self._emit_status(f"Started segmentation: {os.path.basename(pdf_path)}")
                 
+                # Start progress tracking
+                progress_id = f"progress_{process_id}"
+                self.active_progress_ids[process_id] = progress_id
+                self.progress_started.emit(progress_id, f"Segmenting {os.path.basename(pdf_path)}")
+                
             return success
             
         except Exception as e:
@@ -296,6 +318,11 @@ class PDFHandler(BaseHandler):
                 self.pdf_processing_started.emit(pdf_path)
                 self.processing_progress.emit(pdf_path, 1, "Full pipeline started")
                 self._emit_status(f"Started full processing: {os.path.basename(pdf_path)}")
+                
+                # Start progress tracking
+                progress_id = f"progress_{process_id}"
+                self.active_progress_ids[process_id] = progress_id
+                self.progress_started.emit(progress_id, f"Processing {os.path.basename(pdf_path)}")
                 
             return success
             
@@ -341,6 +368,11 @@ class PDFHandler(BaseHandler):
                 self.processing_state.start_processing(pdf_path, process_id)
                 self.processing_progress.emit(pdf_path, 2, "LLM processing started")
                 self._emit_status(f"Started LLM processing: {os.path.basename(pdf_path)}")
+                
+                # Start progress tracking
+                progress_id = f"progress_{process_id}"
+                self.active_progress_ids[process_id] = progress_id
+                self.progress_started.emit(progress_id, f"LLM Processing {os.path.basename(pdf_path)}")
                 
             return success
             
@@ -418,11 +450,38 @@ class PDFHandler(BaseHandler):
         # Emit signals
         self.pdf_segmentation_finished.emit(pdf_path, success)
         
+        # Update progress tracking
+        if process_id in self.active_progress_ids:
+            progress_id = self.active_progress_ids[process_id]
+            if success:
+                self.progress_finished.emit(progress_id, True, "Segmentation completed")
+            else:
+                self.progress_finished.emit(progress_id, False, "Segmentation failed")
+            del self.active_progress_ids[process_id]
+        
         if success:
             self.processing_progress.emit(pdf_path, 1, "PDF segmentation completed")
             self._emit_status(f"Segmentation completed: {pdf_name}")
+            
+            # Emit success notification
+            if self.status_manager:
+                self.status_manager.add_status_message(
+                    f"Successfully segmented: {pdf_name}",
+                    StatusLevel.SUCCESS,
+                    "PDFHandler",
+                    auto_remove_ms=5000
+                )
         else:
             self._emit_status(f"Segmentation failed: {pdf_name}")
+            
+            # Emit error notification
+            if self.status_manager:
+                self.status_manager.add_status_message(
+                    f"Segmentation failed: {pdf_name}",
+                    StatusLevel.ERROR,
+                    "PDFHandler",
+                    auto_remove_ms=10000
+                )
             
     def _handle_llm_processing_finished(self, process_id: str, success: bool):
         """Handle LLM processing completion."""
@@ -440,11 +499,38 @@ class PDFHandler(BaseHandler):
         # Emit signals
         self.llm_processing_finished.emit(pdf_path, success)
         
+        # Update progress tracking
+        if process_id in self.active_progress_ids:
+            progress_id = self.active_progress_ids[process_id]
+            if success:
+                self.progress_finished.emit(progress_id, True, "LLM processing completed")
+            else:
+                self.progress_finished.emit(progress_id, False, "LLM processing failed")
+            del self.active_progress_ids[process_id]
+        
         if success:
             self.processing_progress.emit(pdf_path, 2, "LLM processing completed")
             self._emit_status(f"LLM processing completed: {pdf_name}")
+            
+            # Emit success notification
+            if self.status_manager:
+                self.status_manager.add_status_message(
+                    f"LLM processing completed: {pdf_name}",
+                    StatusLevel.SUCCESS,
+                    "PDFHandler",
+                    auto_remove_ms=5000
+                )
         else:
             self._emit_status(f"LLM processing failed: {pdf_name}")
+            
+            # Emit error notification
+            if self.status_manager:
+                self.status_manager.add_status_message(
+                    f"LLM processing failed: {pdf_name}",
+                    StatusLevel.ERROR,
+                    "PDFHandler",
+                    auto_remove_ms=10000
+                )
             
     def _handle_pipeline_finished(self, process_id: str, success: bool):
         """Handle full pipeline completion."""
@@ -462,16 +548,56 @@ class PDFHandler(BaseHandler):
         # Emit signals
         self.pdf_processing_finished.emit(pdf_path, success)
         
+        # Update progress tracking
+        if process_id in self.active_progress_ids:
+            progress_id = self.active_progress_ids[process_id]
+            if success:
+                self.progress_finished.emit(progress_id, True, "Full pipeline completed")
+            else:
+                self.progress_finished.emit(progress_id, False, "Full pipeline failed")
+            del self.active_progress_ids[process_id]
+        
         if success:
             self.processing_progress.emit(pdf_path, 3, "Full pipeline completed")
             self._emit_status(f"Full processing completed: {pdf_name}")
+            
+            # Emit success notification
+            if self.status_manager:
+                self.status_manager.add_status_message(
+                    f"Full processing completed: {pdf_name}",
+                    StatusLevel.SUCCESS,
+                    "PDFHandler",
+                    auto_remove_ms=8000
+                )
         else:
             self._emit_status(f"Full processing failed: {pdf_name}")
+            
+            # Emit error notification
+            if self.status_manager:
+                self.status_manager.add_status_message(
+                    f"Full processing failed: {pdf_name}",
+                    StatusLevel.ERROR,
+                    "PDFHandler",
+                    auto_remove_ms=12000
+                )
             
     def _on_process_output(self, process_id: str, output: str):
         """Handle process output for logging."""
         # Forward output to status for logging
         self._emit_status(f"[{process_id}] {output}")
+        
+        # Update progress message if available
+        if process_id in self.active_progress_ids:
+            progress_id = self.active_progress_ids[process_id]
+            # Extract meaningful progress information from output
+            clean_output = output.strip()
+            if clean_output and len(clean_output) < 100:  # Only short, meaningful messages
+                # Try to extract progress percentage from common patterns
+                progress_value = self._extract_progress_from_output(clean_output)
+                if progress_value >= 0:
+                    self.progress_updated.emit(progress_id, progress_value, clean_output)
+                else:
+                    self.progress_updated.emit(progress_id, -1, clean_output)  # -1 means no progress change
         
     def _on_process_error(self, process_id: str, error: str):
         """Handle process error output."""
@@ -554,6 +680,41 @@ class PDFHandler(BaseHandler):
             
         return self.start_full_processing(pdf_path)
         
+    def _extract_progress_from_output(self, output: str) -> int:
+        """
+        Extract progress percentage from process output.
+        
+        Args:
+            output: Process output string
+            
+        Returns:
+            Progress percentage (0-100) or -1 if no progress found
+        """
+        import re
+        
+        # Common progress patterns
+        patterns = [
+            r'(\d+)%',  # "50%"
+            r'(\d+)/(\d+)',  # "5/10"
+            r'Progress:\s*(\d+)',  # "Progress: 75"
+            r'Step\s*(\d+)\s*of\s*(\d+)',  # "Step 3 of 5"
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, output, re.IGNORECASE)
+            if match:
+                if len(match.groups()) == 1:
+                    # Direct percentage
+                    return min(100, max(0, int(match.group(1))))
+                elif len(match.groups()) == 2:
+                    # Fraction format
+                    current = int(match.group(1))
+                    total = int(match.group(2))
+                    if total > 0:
+                        return min(100, max(0, int((current / total) * 100)))
+        
+        return -1  # No progress found
+    
     def cleanup(self):
         """Cleanup PDF handler resources."""
         # Cancel all processing before cleanup

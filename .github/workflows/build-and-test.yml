@@ -1,0 +1,274 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC to catch regressions
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build (comma-separated)'
+        required: false
+        default: 'source,wheel'
+      run_e2e:
+        description: 'Run E2E tests'
+        type: boolean
+        default: true
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        exclude:
+          # Reduce matrix size for faster builds
+          - os: windows-latest
+            python-version: '3.8'
+          - os: macos-latest
+            python-version: '3.8'
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build pytest pytest-qt pytest-cov
+        pip install -r requirements.txt
+    
+    - name: Install development dependencies
+      run: |
+        pip install watchdog  # For watch mode
+        pip install pyinstaller  # For executable builds
+    
+    - name: Run build and test (Linux/macOS)
+      if: matrix.os != 'windows-latest'
+      run: |
+        export QT_QPA_PLATFORM=offscreen
+        python build_and_test.py --headless --verbose --platforms source wheel
+      env:
+        DISPLAY: ':99.0'
+    
+    - name: Run build and test (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        python build_and_test.py --headless --verbose --platforms source wheel
+      env:
+        QT_QPA_PLATFORM: offscreen
+    
+    - name: Run E2E tests
+      if: github.event.inputs.run_e2e == 'true' || github.event_name == 'schedule'
+      run: |
+        python build_and_test.py --test-only --headless --verbose
+      env:
+        QT_QPA_PLATFORM: offscreen
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: |
+          test_results.json
+          build_test_report.md
+          build_test.log
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+      with:
+        name: build-artifacts
+        path: |
+          dist/
+    
+    - name: Check for regressions
+      if: always()
+      run: |
+        python -c "
+import json
+import sys
+try:
+    with open('test_results.json', 'r') as f:
+        results = json.load(f)
+    
+    regressions = results.get('regressions', [])
+    if regressions:
+        print(f'❌ Found {len(regressions)} regressions:')
+        for r in regressions:
+            print(f'  - {r[\"type\"]}: {r.get(\"metric\", r.get(\"test\"))}')
+        sys.exit(1)
+    else:
+        print('✅ No regressions detected')
+except FileNotFoundError:
+    print('⚠️ No test results file found')
+except Exception as e:
+    print(f'❌ Error checking regressions: {e}')
+    sys.exit(1)
+"
+
+  build-executables:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build executable
+      run: |
+        python build_and_test.py --build-only --platforms exe --verbose
+    
+    - name: Test executable
+      run: |
+        python build_and_test.py --test-only --verbose
+      env:
+        QT_QPA_PLATFORM: offscreen
+    
+    - name: Upload executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: executable-${{ matrix.platform }}
+        path: |
+          dist/pdf-power-converter*
+
+  regression-report:
+    needs: [build-and-test, build-executables]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all test results
+      uses: actions/download-artifact@v3
+      with:
+        path: test-results/
+    
+    - name: Generate regression report
+      run: |
+        python -c "
+import json
+import os
+from pathlib import Path
+
+all_regressions = []
+all_results = []
+
+# Collect all test results
+for result_dir in Path('test-results').glob('test-results-*'):
+    result_file = result_dir / 'test_results.json'
+    if result_file.exists():
+        with open(result_file, 'r') as f:
+            result = json.load(f)
+            all_results.append(result)
+            all_regressions.extend(result.get('regressions', []))
+
+# Generate summary report
+report = f'''# Regression Report
+Generated: $(date)
+
+## Summary
+- Total test runs: {len(all_results)}
+- Total regressions: {len(all_regressions)}
+
+'''
+
+if all_regressions:
+    report += '## Regressions Found\n'
+    for i, regression in enumerate(all_regressions, 1):
+        report += f'{i}. **{regression[\"type\"]}**: {regression.get(\"metric\", regression.get(\"test\"))}\n'
+        if regression['type'] == 'performance':
+            report += f'   - Previous: {regression[\"previous\"]}\n'
+            report += f'   - Current: {regression[\"current\"]}\n'
+            report += f'   - Regression: {regression[\"regression_percent\"]:.1f}%\n'
+        report += '\n'
+else:
+    report += '✅ No regressions detected across all test runs.\n'
+
+with open('regression_report.md', 'w') as f:
+    f.write(report)
+
+print(report)
+"
+    
+    - name: Comment on PR
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let report = '# Build and Test Results\n\n';
+          
+          try {
+            const regressionReport = fs.readFileSync('regression_report.md', 'utf8');
+            report += regressionReport;
+          } catch (e) {
+            report += '❌ Failed to generate regression report\n';
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
+
+  notify-on-failure:
+    needs: [build-and-test, build-executables]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Send notification
+      run: |
+        echo "🚨 Scheduled build failed - regressions detected!"
+        # Add notification logic here (Slack, email, etc.)
+        # Example: curl -X POST -H 'Content-type: application/json' --data '{"text":"Build failed!"}' $SLACK_WEBHOOK_URL

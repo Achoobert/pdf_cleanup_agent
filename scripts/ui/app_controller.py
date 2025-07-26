@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication
 
 from ui.components import MainWindow
 from ui.utils import AppConfig, PathManager
+from ui.styles.app_styles import get_app_styles
 
 
 class PDFCleanupApp:
@@ -42,6 +43,10 @@ class PDFCleanupApp:
         self.app.setApplicationVersion("1.0.0")
         self.app.setOrganizationName("PDF Power Converter")
         
+        # Initialize theme system
+        self.styles = get_app_styles()
+        self.app.setStyleSheet(self.styles.get_main_window_style())
+        
         # Initialize components
         self.config = AppConfig()
         self.path_manager = PathManager()
@@ -57,6 +62,9 @@ class PDFCleanupApp:
         if self.debug_mode:
             log_format = '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
             
+        # Create custom handler for console widget
+        self.console_handler = None
+        
         logging.basicConfig(
             level=getattr(logging, self.log_level.upper()),
             format=log_format,
@@ -68,6 +76,36 @@ class PDFCleanupApp:
         
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"PDF Cleanup App starting (debug={self.debug_mode}, log_level={self.log_level})")
+        
+    def _setup_console_logging(self):
+        """Setup logging to console widget."""
+        if self.main_window and self.main_window.left_panel:
+            # Create custom handler that sends logs to console widget
+            class ConsoleWidgetHandler(logging.Handler):
+                def __init__(self, console_widget):
+                    super().__init__()
+                    self.console_widget = console_widget
+                    
+                def emit(self, record):
+                    try:
+                        msg = self.format(record)
+                        if self.console_widget:
+                            self.console_widget.append_console_output(msg)
+                    except Exception:
+                        pass  # Ignore errors in logging handler
+            
+            # Add console handler to root logger
+            console_handler = ConsoleWidgetHandler(self.main_window.left_panel)
+            console_handler.setLevel(getattr(logging, self.log_level.upper()))
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            console_handler.setFormatter(formatter)
+            
+            # Add to root logger so all modules log to console
+            root_logger = logging.getLogger()
+            root_logger.addHandler(console_handler)
+            
+            self.console_handler = console_handler
+            self.logger.info("Console logging connected successfully")
         
     def _handle_exception(self, exc_type, exc_value, exc_traceback):
         """
@@ -116,6 +154,9 @@ class PDFCleanupApp:
             # Create main window
             self.main_window = MainWindow()
             self.main_window.initialize()
+            
+            # Connect logging to console widget
+            self._setup_console_logging()
             
             self.logger.info("Application initialization completed successfully")
             return True
