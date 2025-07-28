@@ -36,14 +36,14 @@ def migrate_configs():
         if root_file.exists() and not dest_file.exists():
             try:
                 shutil.copy2(root_file, dest_file)
-                print(f"✅ Copied {config_file} to data/config/")
+                print(f"Copied {config_file} to data/config/")
                 moved_files.append(config_file)
             except Exception as e:
-                print(f"❌ Could not copy {config_file}: {e}")
+                print(f"ERROR: Could not copy {config_file}: {e}")
         elif dest_file.exists():
-            print(f"✅ {config_file} already exists in data/config/")
+            print(f"{config_file} already exists in data/config/")
         else:
-            print(f"⚠️  {config_file} not found")
+            print(f"WARNING: {config_file} not found")
     
     # Check for any other .yml files in root that might be config files
     for yml_file in Path(".").glob("*.yml"):
@@ -52,20 +52,20 @@ def migrate_configs():
             if not dest_file.exists():
                 try:
                     shutil.copy2(yml_file, dest_file)
-                    print(f"✅ Found and copied {yml_file.name} to data/config/")
+                    print(f"Found and copied {yml_file.name} to data/config/")
                     moved_files.append(yml_file.name)
                 except Exception as e:
-                    print(f"❌ Could not copy {yml_file.name}: {e}")
+                    print(f"ERROR: Could not copy {yml_file.name}: {e}")
     
     print("\n" + "=" * 40)
     if moved_files:
-        print(f"✅ Migration complete! Moved {len(moved_files)} files.")
+        print(f"Migration complete! Moved {len(moved_files)} files.")
         print("\nMoved files:")
         for file in moved_files:
             print(f"  - {file}")
         print(f"\nAll config files are now in: {config_dir.absolute()}")
     else:
-        print("✅ No migration needed. All config files are already in place.")
+        print("No migration needed. All config files are already in place.")
     
     print(f"\nConfig directory contents:")
     if config_dir.exists():

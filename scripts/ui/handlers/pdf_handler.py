@@ -268,7 +268,7 @@ class PDFHandler(BaseHandler):
             success = self.process_manager.start_process(
                 process_id=process_id,
                 command=python_exe,
-                args=[segmenter_script, pdf_path, "--output-dir", txt_output_dir]
+                args=['-u', segmenter_script, pdf_path, "--output-dir", txt_output_dir]  # -u for unbuffered output
             )
             
             if success:
@@ -310,7 +310,7 @@ class PDFHandler(BaseHandler):
             success = self.process_manager.start_process(
                 process_id=process_id,
                 command=python_exe,
-                args=[pipeline_script, pdf_path]
+                args=['-u', pipeline_script, pdf_path]  # -u for unbuffered output
             )
             
             if success:
@@ -361,7 +361,7 @@ class PDFHandler(BaseHandler):
             success = self.process_manager.start_process(
                 process_id=process_id,
                 command=python_exe,
-                args=[agent_script, txt_input_dir]
+                args=['-u', agent_script, txt_input_dir]  # -u for unbuffered output
             )
             
             if success:

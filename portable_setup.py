@@ -343,15 +343,15 @@ def main():
         create_env_template(portable_dir)
         
         print("\n" + "=" * 50)
-        print("✅ Portable distribution created successfully!")
-        print(f"📁 Location: {portable_dir.absolute()}")
+        print("Portable distribution created successfully!")
+        print(f"Location: {portable_dir.absolute()}")
         print("\nNext steps:")
         print("1. Test the portable version")
         print("2. Create a ZIP file for distribution")
         print("3. Share with users!")
         
     except Exception as e:
-        print(f"❌ Error creating portable distribution: {e}")
+        print(f"ERROR: Error creating portable distribution: {e}")
         return 1
     
     return 0

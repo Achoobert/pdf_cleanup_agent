@@ -24,6 +24,7 @@ class AppSettings:
     model_name: str = "llama3:8b"
     chunk_size: int = 4000
     api_endpoint: str = "http://localhost:11434/api/generate"
+    prompt_file: str = "data/prompts/default_prompt.txt"
     data_directories: Dict[str, str] = field(default_factory=dict)
     ui_preferences: Dict[str, Any] = field(default_factory=dict)
     processing_steps: Dict[int, str] = field(default_factory=dict)
@@ -201,6 +202,7 @@ class AppConfig(QObject):
                 model_name=settings_data.get('model', 'llama3:8b'),
                 chunk_size=int(settings_data.get('chunk_size', 4000)),
                 api_endpoint=settings_data.get('ollama_api', 'http://localhost:11434/api/generate'),
+                prompt_file=settings_data.get('prompt', 'data/prompts/default_prompt.txt'),
                 data_directories=directories_data,
                 ui_preferences=settings_data.get('ui_preferences', {}),
                 processing_steps=processing_steps,
@@ -271,6 +273,7 @@ class AppConfig(QObject):
                     'model': self.settings.model_name,
                     'chunk_size': self.settings.chunk_size,
                     'ollama_api': self.settings.api_endpoint,
+                    'prompt': self.settings.prompt_file,
                     'ui_preferences': self.settings.ui_preferences
                 },
                 'directories': self.settings.data_directories,

@@ -22,7 +22,7 @@ def force_remove_directory(path):
     # First try normal removal
     try:
         shutil.rmtree(path)
-        print(f"✅ Successfully removed {path}")
+        print(f"Successfully removed {path}")
         return True
     except PermissionError:
         print("Permission error encountered, trying alternative methods...")
@@ -50,7 +50,7 @@ def force_remove_directory(path):
         # Try to remove the root directory
         os.chmod(path, 0o777)
         os.rmdir(path)
-        print(f"✅ Successfully removed {path} after permission fix")
+        print(f"Successfully removed {path} after permission fix")
         return True
     except Exception as e:
         print(f"Still couldn't remove: {e}")
@@ -59,7 +59,7 @@ def force_remove_directory(path):
     try:
         backup_name = f"{path}_backup_{int(time.time())}"
         os.rename(path, backup_name)
-        print(f"⚠️  Renamed {path} to {backup_name}")
+        print(f"WARNING: Renamed {path} to {backup_name}")
         print("You may need to manually delete this directory later.")
         return True
     except Exception as e:

@@ -14,9 +14,9 @@ def test_python_version():
     """Test that Python version is compatible."""
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 8):
-        print(f"❌ Python {version.major}.{version.minor} is too old. Need Python 3.8+")
+        print(f"ERROR: Python {version.major}.{version.minor} is too old. Need Python 3.8+")
         return False
-    print(f"✅ Python {version.major}.{version.minor}.{version.micro} is compatible")
+    print(f"Python {version.major}.{version.minor}.{version.micro} is compatible")
     return True
 
 def test_required_packages():
@@ -32,9 +32,9 @@ def test_required_packages():
     for package_name, import_name in required_packages:
         try:
             __import__(import_name)
-            print(f"✅ {package_name} is available")
+            print(f"{package_name} is available")
         except ImportError:
-            print(f"❌ {package_name} is missing")
+            print(f"ERROR: {package_name} is missing")
             missing.append(package_name)
     
     return len(missing) == 0, missing
@@ -44,7 +44,7 @@ def test_portable_structure():
     portable_dir = Path("portable_dist")
     
     if not portable_dir.exists():
-        print("❌ Portable distribution not found. Run create_portable.bat first.")
+        print("ERROR: Portable distribution not found. Run create_portable.bat first.")
         return False
     
     required_files = [
@@ -60,9 +60,9 @@ def test_portable_structure():
     for file_path in required_files:
         full_path = portable_dir / file_path
         if full_path.exists():
-            print(f"✅ {file_path} exists")
+            print(f"{file_path} exists")
         else:
-            print(f"❌ {file_path} is missing")
+            print(f"ERROR: {file_path} is missing")
             missing_files.append(file_path)
     
     return len(missing_files) == 0
@@ -76,10 +76,10 @@ def test_app_import():
             sys.path.insert(0, str(scripts_path))
         
         from ui.app_controller import PDFCleanupApp
-        print("✅ Main application can be imported")
+        print("Main application can be imported")
         return True
     except ImportError as e:
-        print(f"❌ Cannot import main application: {e}")
+        print(f"ERROR: Cannot import main application: {e}")
         return False
 
 def main():
@@ -114,10 +114,10 @@ def main():
     print(f"Tests passed: {tests_passed}/{total_tests}")
     
     if tests_passed == total_tests:
-        print("🎉 All tests passed! Portable distribution is ready.")
+        print("All tests passed! Portable distribution is ready.")
         return 0
     else:
-        print("⚠️  Some tests failed. Please fix the issues above.")
+        print("WARNING: Some tests failed. Please fix the issues above.")
         return 1
 
 if __name__ == "__main__":
