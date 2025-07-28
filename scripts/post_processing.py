@@ -2,6 +2,14 @@ import re
 import os
 import sys
 
+# Fix console encoding for Unicode support on Windows
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
+
 def clean_llm_output(text):
     """Remove common LLM output artifacts and meta-text."""
     # Remove lines that are exactly 'Here is the cleaned text:' or 'Here is the cleaned and repaired text:'

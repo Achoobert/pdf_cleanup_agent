@@ -11,3 +11,36 @@
 2025-07-26 17:09:11,125 - INFO - Running integration tests...
 2025-07-26 17:09:11,178 - ERROR - integration tests failed
 2025-07-26 17:09:11,178 - INFO - Running e2e_source tests...
+2025-07-28 16:05:09,726 - INFO - Starting build and test process...
+2025-07-28 16:05:09,731 - INFO - Using temp directory: C:\Users\green\AppData\Local\Temp\pdf_converter_test_ebaajw9z
+2025-07-28 16:05:09,732 - INFO - === BUILD PHASE ===
+2025-07-28 16:05:09,732 - INFO - Building source...
+2025-07-28 16:05:44,531 - INFO - Build successful for source
+2025-07-28 16:05:44,532 - INFO - Building wheel...
+2025-07-28 16:06:05,970 - INFO - Build successful for wheel
+2025-07-28 16:06:05,970 - INFO - Building exe...
+2025-07-28 16:06:06,212 - DEBUG - Loaded ctypes backend
+2025-07-28 16:10:35,103 - INFO - Starting build and test process...
+2025-07-28 16:10:35,107 - INFO - Using temp directory: C:\Users\green\AppData\Local\Temp\pdf_converter_test_y7gaa1x5
+2025-07-28 16:10:35,108 - INFO - === BUILD PHASE ===
+2025-07-28 16:10:35,108 - INFO - Building exe...
+2025-07-28 16:10:35,350 - DEBUG - Loaded ctypes backend
+2025-07-28 16:10:36,707 - INFO - PyInstaller: 6.14.2, contrib hooks: 2025.8
+2025-07-28 16:10:36,708 - INFO - Python: 3.12.5
+2025-07-28 16:10:36,762 - INFO - Platform: Windows-10-10.0.19045-SP0
+2025-07-28 16:10:36,762 - INFO - Python environment: C:\Users\green\AppData\Local\Programs\Python\Python312
+2025-07-28 16:10:36,765 - INFO - wrote C:\Users\green\repos\pdf_cleanup_agent\pdf-power-converter.spec
+2025-07-28 16:10:36,767 - DEBUG - Testing UPX availability ...
+2025-07-28 16:10:36,774 - DEBUG - UPX is not available.
+2025-07-28 16:10:36,778 - DEBUG - script: C:\Users\green\repos\pdf_cleanup_agent\main.py
+2025-07-28 16:10:36,780 - INFO - Module search paths (PYTHONPATH):
+['C:\\Users\\green\\repos\\pdf_cleanup_agent\\scripts',
+ 'C:\\Users\\green\\repos\\pdf_cleanup_agent\\scripts\\build',
+ 'C:\\Users\\green\\AppData\\Local\\Programs\\Python\\Python312\\python312.zip',
+ 'C:\\Users\\green\\AppData\\Local\\Programs\\Python\\Python312\\DLLs',
+ 'C:\\Users\\green\\AppData\\Local\\Programs\\Python\\Python312\\Lib',
+ 'C:\\Users\\green\\AppData\\Local\\Programs\\Python\\Python312',
+ 'C:\\Users\\green\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages',
+ 'C:\\Users\\green\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\setuptools\\_vendor',
+ 'C:\\Users\\green\\repos\\pdf_cleanup_agent']
+2025-07-28 16:10:38,328 - INFO - Appending 'datas' from .spec

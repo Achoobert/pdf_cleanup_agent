@@ -3,6 +3,14 @@
 import requests
 import os
 import sys
+
+# Fix console encoding for Unicode support on Windows
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
 sys.path.insert(0, os.path.dirname(__file__))
 try:
     from model_selector_cli_demo import load_user_selection

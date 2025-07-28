@@ -119,8 +119,9 @@ class MainWindow(BaseComponent):
             
         # Connect cross-panel interactions
         if self.left_panel and self.right_panel:
-            # Update right panel when PDF is selected
+            # Update right panel when PDF is selected or dropped
             self.left_panel.pdf_selected.connect(self.right_panel.set_current_pdf)
+            self.left_panel.pdf_dropped.connect(self.right_panel.set_current_pdf)
             
         # Connect handler signals
         self._connect_handler_signals()

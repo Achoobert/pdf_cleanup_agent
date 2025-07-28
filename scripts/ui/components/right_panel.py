@@ -266,29 +266,90 @@ class RightPanel(BaseComponent):
         import os
         import subprocess
         import sys
+        import yaml
         
         try:
-            # Look for prompts file in data directory
-            prompts_file = os.path.join(os.getcwd(), "data", "prompts.txt")
+            # Load config to get prompt file path - find project root
+            def find_project_root():
+                # Start from current file location
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                # Try multiple approaches to find project root
+                search_paths = [
+                    current_dir,
+                    os.getcwd(),  # Current working directory
+                    os.path.dirname(os.path.dirname(os.path.dirname(current_dir))),  # Go up 3 levels from scripts/ui/components
+                ]
+                
+                for path in search_paths:
+                    config_file = os.path.join(path, 'pipeline_config.yml')
+                    if os.path.exists(config_file):
+                        return path
+                
+                # If not found, navigate up from current file
+                project_root = current_dir
+                while project_root and project_root != os.path.dirname(project_root):
+                    if os.path.exists(os.path.join(project_root, 'pipeline_config.yml')):
+                        return project_root
+                    project_root = os.path.dirname(project_root)
+                
+                return os.getcwd()  # fallback to current working directory
+            
+            project_root = find_project_root()
+            config_path = os.path.join(project_root, 'pipeline_config.yml')
+            self._emit_status(f"Project root: {project_root}")
+            self._emit_status(f"Loading config from: {config_path}")
+            
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+            prompts_file = os.path.join(project_root, config['settings']['prompt'])
+            self._emit_status(f"Prompt file path: {prompts_file}")
+            
+            # Check if file exists
+            if not os.path.exists(prompts_file):
+                self._emit_status(f"Prompt file not found at: {prompts_file}")
+                # Try to create it if directory exists
+                prompt_dir = os.path.dirname(prompts_file)
+                if not os.path.exists(prompt_dir):
+                    self._emit_status(f"Creating prompt directory: {prompt_dir}")
+                    os.makedirs(prompt_dir, exist_ok=True)
             
             # Create default prompts file if it doesn't exist
             if not os.path.exists(prompts_file):
                 os.makedirs(os.path.dirname(prompts_file), exist_ok=True)
-                default_prompts = """# PDF Processing Prompts
+                default_prompts = """Act as a text normalization expert. Clean and repair the following PDF-extracted text by performing the following operations:
 
-## Default Prompt
-Please process this PDF content and extract the key information.
+1. **Line Break Repair**  
+   - Remove mid-sentence line breaks while preserving paragraph breaks.  
+   - Join hyphenated words across lines (e.g., "exam-\\nple" → "example").  
+   - Keep bullet points and numbered lists intact.
 
-## Summarization Prompt
-Please provide a concise summary of the main points in this document.
+2. **Spacing Correction**  
+   - Fix irregular letter spacing (e.g., "w o r d" → "word").  
+   - Remove excessive spaces between words (e.g., "too     much" → "too much").  
+   - Preserve meaningful indentation (e.g., code blocks).
 
-## Analysis Prompt
-Please analyze this document and identify the key themes and insights.
+3. **Character Restoration**  
+   - Replace common OCR errors (e.g., corrupted characters or missing punctuation).  
+   - Infer missing characters using context clues.  
+   - Use `[UNCERTAIN]` only when the correct fix is ambiguous.
 
-# Instructions
-- Edit these prompts as needed for your use case
-- Add new prompts by creating new sections with ## headers
-- Save the file when done
+4. **Special Cases**  
+   - Preserve numbers, dates, URLs, and emails.  
+   - Preserve technical terms and proper nouns.  
+   - Remove repeated words from scan errors (e.g., "the the" → "the").
+   - **Handle OCR artifacts**: When you encounter vertical columns of single characters (like "s\\nh\\no\\no\\nt\\ni\\nn\\ng\\nd\\ne\\ne\\np\\no\\nn\\ne\\ns"), these are OCR artifacts where text was incorrectly split vertically. Reconstruct these into proper words by reading the characters horizontally. For example:
+     - "B\\nO\\nO\\nK\\nT\\nH\\nR\\nE\\nE" → "BOOK THREE"
+     - "2\\n0\\n2\\n0" → "2020"
+   - **Remove page artifacts**: Delete page headers, footers, and page numbers that are not part of the actual content. Examples to remove:
+     - "--- Page 21 ---"
+     - "2121" (when appearing as page numbers)
+     - Repeated headers like "EDGE OF DARKNESS" appearing multiple times on the same page
+     - Footer text that repeats across pages
+
+---
+
+**Input text starts below:**  
+
 """
                 with open(prompts_file, 'w', encoding='utf-8') as f:
                     f.write(default_prompts)

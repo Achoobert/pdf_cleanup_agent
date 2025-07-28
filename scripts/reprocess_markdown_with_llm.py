@@ -14,11 +14,12 @@ if not os.path.exists(md_path):
     sys.exit(1)
 
 # Load config for model and API
-with open(os.path.join(os.path.dirname(__file__), '../pipeline_config.yml'), 'r') as f:
+config_path = os.path.join(os.path.dirname(__file__), '../pipeline_config.yml')
+with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
 OLLAMA_API = config['settings']['ollama_api']
 MODEL = config['settings']['model']
-PROMPT_FILE = os.path.join(os.path.dirname(__file__), '../prompts/parse_pdf_text')
+PROMPT_FILE = os.path.join(os.path.dirname(__file__), '..', config['settings']['prompt'])
 
 with open(PROMPT_FILE, 'r', encoding='utf-8') as f:
     prompt = f.read()

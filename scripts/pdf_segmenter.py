@@ -12,6 +12,14 @@ from pathlib import Path
 import argparse
 import yaml
 
+# Fix console encoding for Unicode support on Windows
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
+
 
 class PDFSegmenter:
     def __init__(self, pdf_path, output_dir="data/txt_input"):

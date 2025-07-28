@@ -1,0 +1,96 @@
+2025-07-28 16:57:11,572 - ui.app_controller - INFO - PDF Cleanup App starting (debug=False, log_level=INFO)
+2025-07-28 16:57:11,572 - ui.app_controller - INFO - Initializing application components
+2025-07-28 16:57:11,573 - ui.utils.config - INFO - Loading configuration from: C:\Users\green\repos\pdf_cleanup_agent\pipeline_config.yml
+2025-07-28 16:57:11,578 - ui.utils.config - INFO - Configuration loaded successfully
+2025-07-28 16:57:12,388 - RightPanel - INFO - Status updated: Ready (success)
+2025-07-28 16:57:12,415 - ui.app_controller - INFO - Console logging connected successfully
+2025-07-28 16:57:12,417 - ui.app_controller - INFO - Application initialization completed successfully
+2025-07-28 16:57:12,419 - ui.app_controller - INFO - Starting application main loop
+2025-07-28 16:57:12,585 - RightPanel - INFO - Status: All processes completed
+2025-07-28 16:57:12,587 - RightPanel - INFO - Status updated: Ready (success)
+2025-07-28 16:57:15,740 - RightPanel - INFO - Current PDF set to: blackwater.pdf
+2025-07-28 16:57:15,741 - LeftPanel - INFO - Selected PDF: C:\Users\green\repos\pdf_cleanup_agent\data\pdf\blackwater.pdf
+2025-07-28 16:57:20,395 - RightPanel - INFO - Status: Process started: pdf_pipeline_blackwater.pdf
+2025-07-28 16:57:20,397 - ProcessManager - INFO - Process pdf_pipeline_blackwater.pdf started
+2025-07-28 16:57:20,398 - RightPanel - INFO - Status: Queue: 0 waiting, 1 active
+2025-07-28 16:57:20,401 - RightPanel - INFO - Status updated: Processing... (info)
+2025-07-28 16:57:20,402 - RightPanel - INFO - Status updated: Processing... (info)
+2025-07-28 16:57:20,404 - RightPanel - INFO - Status: Started processing: blackwater.pdf
+2025-07-28 16:57:20,405 - RightPanel - INFO - Processing: Step 1: Full pipeline started
+2025-07-28 16:57:20,406 - PDFHandler - INFO - Started full processing: blackwater.pdf
+2025-07-28 16:57:22,147 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: Traceback (most recent call last):
+2025-07-28 16:57:22,150 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: Traceback (most recent call last):
+2025-07-28 16:57:22,153 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_segmenter.py", line 34, in open_pdf
+2025-07-28 16:57:22,161 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_segmenter.py", line 34, in open_pdf
+2025-07-28 16:57:22,164 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: print(f"\u2705 Opened PDF: {self.pdf_path}")
+2025-07-28 16:57:22,169 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: print(f"\u2705 Opened PDF: {self.pdf_path}")
+2025-07-28 16:57:22,171 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: File "C:\Users\green\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+2025-07-28 16:57:22,174 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: File "C:\Users\green\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+2025-07-28 16:57:22,176 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+2025-07-28 16:57:22,179 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+2025-07-28 16:57:22,180 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-28 16:57:22,183 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-28 16:57:22,185 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+2025-07-28 16:57:22,189 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+2025-07-28 16:57:22,190 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: During handling of the above exception, another exception occurred:
+2025-07-28 16:57:22,195 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: During handling of the above exception, another exception occurred:
+2025-07-28 16:57:22,197 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: Traceback (most recent call last):
+2025-07-28 16:57:22,201 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: Traceback (most recent call last):
+2025-07-28 16:57:22,203 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_process_pipeline.py", line 58, in <module>
+2025-07-28 16:57:22,206 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_process_pipeline.py", line 58, in <module>
+2025-07-28 16:57:22,209 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: main()
+2025-07-28 16:57:22,211 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: main()
+2025-07-28 16:57:22,213 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: ^^^^^^
+2025-07-28 16:57:22,215 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: ^^^^^^
+2025-07-28 16:57:22,218 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_process_pipeline.py", line 28, in main
+2025-07-28 16:57:22,222 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_process_pipeline.py", line 28, in main
+2025-07-28 16:57:22,224 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: if not segmenter.open_pdf():
+2025-07-28 16:57:22,227 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: if not segmenter.open_pdf():
+2025-07-28 16:57:22,230 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: ^^^^^^^^^^^^^^^^^^^^
+2025-07-28 16:57:22,233 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: ^^^^^^^^^^^^^^^^^^^^
+2025-07-28 16:57:22,236 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_segmenter.py", line 38, in open_pdf
+2025-07-28 16:57:22,239 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: File "C:\Users\green\repos\pdf_cleanup_agent\scripts\pdf_segmenter.py", line 38, in open_pdf
+2025-07-28 16:57:22,241 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: print(f"\u274c Error opening PDF: {e}")
+2025-07-28 16:57:22,244 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: print(f"\u274c Error opening PDF: {e}")
+2025-07-28 16:57:22,246 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: File "C:\Users\green\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+2025-07-28 16:57:22,250 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: File "C:\Users\green\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+2025-07-28 16:57:22,253 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+2025-07-28 16:57:22,257 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+2025-07-28 16:57:22,259 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-28 16:57:22,262 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-28 16:57:22,264 - PDFHandler - INFO - [pdf_pipeline_blackwater.pdf] ERROR: UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>
+2025-07-28 16:57:22,268 - RightPanel - INFO - Status: Process error in pdf_pipeline_blackwater.pdf: UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>
+2025-07-28 16:57:22,295 - RightPanel - INFO - Status updated: Ready (success)
+2025-07-28 16:57:22,297 - RightPanel - INFO - Status: Failed processing: blackwater.pdf
+2025-07-28 16:57:22,301 - PDFHandler - INFO - Full processing failed: blackwater.pdf
+2025-07-28 16:57:22,304 - RightPanel - INFO - Status: Full processing failed: blackwater.pdf
+2025-07-28 16:57:22,305 - RightPanel - INFO - Status: Process pdf_pipeline_blackwater.pdf failed
+2025-07-28 16:57:22,308 - ProcessManager - INFO - Process pdf_pipeline_blackwater.pdf failed with exit code 1
+2025-07-28 16:57:22,310 - RightPanel - INFO - Status updated: Ready (success)
+2025-07-28 16:58:35,267 - MainWindow - INFO - MainWindow cleanup completed
+2025-07-28 16:58:35,287 - ui.app_controller - INFO - Application exited with code: 0
+2025-07-28 16:58:35,290 - ui.app_controller - INFO - Starting application cleanup
+2025-07-28 16:58:35,291 - MainWindow - INFO - MainWindow cleanup completed
+2025-07-28 16:58:35,293 - ui.utils.config - INFO - Saving configuration to: C:\Users\green\repos\pdf_cleanup_agent\pipeline_config.yml
+2025-07-28 16:58:35,311 - ui.utils.config - INFO - Configuration saved successfully
+2025-07-28 16:58:35,312 - ui.app_controller - INFO - Application cleanup completed
+2025-07-28 18:04:40,724 - ui.app_controller - INFO - PDF Cleanup App starting (debug=False, log_level=INFO)
+2025-07-28 18:04:40,724 - ui.app_controller - INFO - Initializing application components
+2025-07-28 18:04:40,725 - ui.utils.config - INFO - Loading configuration from: C:\Users\green\repos\pdf_cleanup_agent\pipeline_config.yml
+2025-07-28 18:04:40,730 - ui.utils.config - INFO - Configuration loaded successfully
+2025-07-28 18:04:41,610 - RightPanel - INFO - Status updated: Ready (success)
+2025-07-28 18:04:41,645 - ui.app_controller - INFO - Console logging connected successfully
+2025-07-28 18:04:41,646 - ui.app_controller - INFO - Application initialization completed successfully
+2025-07-28 18:04:41,647 - ui.app_controller - INFO - Starting application main loop
+2025-07-28 18:04:41,872 - RightPanel - INFO - Status: All processes completed
+2025-07-28 18:04:41,874 - RightPanel - INFO - Status updated: Ready (success)
+2025-07-28 18:05:10,385 - RightPanel - INFO - Failed to open prompts file - file not found: [WinError 2] The system cannot find the file specified: 'data/prompts/default_prompt.txt'
+2025-07-28 18:05:31,940 - RightPanel - INFO - Failed to open prompts file - file not found: [WinError 2] The system cannot find the file specified: 'data/prompts/default_prompt.txt'
+2025-07-28 18:08:00,312 - ui.app_controller - INFO - Application interrupted by user
+2025-07-28 18:08:03,132 - MainWindow - INFO - MainWindow cleanup completed
+2025-07-28 18:08:03,169 - ui.app_controller - INFO - Application exited with code: 0
+2025-07-28 18:08:03,172 - ui.app_controller - INFO - Starting application cleanup
+2025-07-28 18:08:03,175 - MainWindow - INFO - MainWindow cleanup completed
+2025-07-28 18:08:03,176 - ui.utils.config - INFO - Saving configuration to: C:\Users\green\repos\pdf_cleanup_agent\pipeline_config.yml
+2025-07-28 18:08:03,205 - ui.utils.config - INFO - Configuration saved successfully
+2025-07-28 18:08:03,209 - ui.app_controller - INFO - Application cleanup completed

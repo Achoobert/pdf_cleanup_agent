@@ -9,6 +9,7 @@ pdf_files:
   name: example
   priority: 1
 settings:
+  prompt: data/prompts/default_prompt.txt
   chunk_size: 4000
   model: llama3:8b
   model_backend: ollama

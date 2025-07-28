@@ -235,7 +235,16 @@ def main():
         prompt_dialog.setWindowTitle('Edit LLM Prompt')
         prompt_layout = QVBoxLayout()
         prompt_edit = QTextEdit()
-        prompt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../prompts/parse_pdf_text'))
+        
+        # Load config to get prompt file path
+        try:
+            config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../pipeline_config.yml'))
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+            prompt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', config['settings']['prompt']))
+        except Exception as e:
+            prompt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/prompts/default_prompt.txt'))  # fallback
+            
         try:
             with open(prompt_path, 'r', encoding='utf-8') as f:
                 prompt_edit.setPlainText(f.read())

@@ -8,11 +8,19 @@ Use this if you want a simple way to start the app without command-line options.
 
 import sys
 import os
+from pathlib import Path
 
 # Add the scripts directory to the Python path
-project_root = os.path.dirname(os.path.abspath(__file__))
-scripts_path = os.path.join(project_root, 'scripts')
-sys.path.insert(0, scripts_path)
+project_root = Path(__file__).parent.absolute()
+scripts_path = project_root / 'scripts'
+sys.path.insert(0, str(scripts_path))
+
+# Set up output directory for portable version
+output_dir = project_root.parent / 'output' if (project_root.parent / 'output').exists() else project_root / 'output'
+output_dir.mkdir(exist_ok=True)
+
+# Set environment variable for output directory
+os.environ.setdefault('PDF_CONVERTER_OUTPUT_DIR', str(output_dir))
 
 def main():
     """Launch the PDF Power Converter application."""

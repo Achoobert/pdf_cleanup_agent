@@ -12,8 +12,13 @@ config.yml
 !data/pdf/
 !data/txt_input/
 
+build/
+portable_dist/
+*.zip
+
 # Virtual environment
 venv/
+venv_clean/
 
 # Python cache files
 __pycache__/

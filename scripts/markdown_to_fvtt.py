@@ -5,6 +5,14 @@ import sys
 import yaml
 from pathlib import Path
 
+# Fix console encoding for Unicode support on Windows
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
+
 def markdown_to_html(markdown_text):
     """Convert markdown to HTML for Foundry VTT."""
     # Basic markdown to HTML conversion

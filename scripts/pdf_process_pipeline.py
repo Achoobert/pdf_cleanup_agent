@@ -3,6 +3,14 @@ import os
 from pathlib import Path
 import yaml
 
+# Fix console encoding for Unicode support on Windows
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
+
 # Ensure project root is in sys.path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -17,11 +25,12 @@ def main():
     pdf_stem = Path(pdf_path).stem
 
     # Output directories from config
-    with open(os.path.join(os.path.dirname(__file__), '../pipeline_config.yml'), 'r') as f:
+    config_path = os.path.join(os.path.dirname(__file__), '../pipeline_config.yml')
+    with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     txt_output_dir = config['directories']['txt_output']
     markdown_output_dir = config['directories']['markdown_output']
-    prompt_file = os.path.join(os.path.dirname(__file__), '../prompts/parse_pdf_text')
+    prompt_file = os.path.join(os.path.dirname(__file__), '..', config['settings']['prompt'])
 
     # 1. Segment PDF to text
     segmenter = PDFSegmenter(pdf_path, txt_output_dir)

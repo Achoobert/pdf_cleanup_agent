@@ -10,13 +10,14 @@ MODEL = "llama3:8b"  # Use the requested model
 CHUNK_SIZE = 4000  # Recommended for Llama 3 8B
 
 # Load configuration
-with open('pipeline_config.yml', 'r') as f:
+config_path = os.path.join(os.path.dirname(__file__), '..', 'pipeline_config.yml')
+with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
 
 # Input/output directories from config
 INPUT_DIR = config['directories']['txt_output']
 OUTPUT_DIR = config['directories']['markdown_output']
-PROMPT_FILE = "prompts/parse_pdf_text"
+PROMPT_FILE = os.path.join(os.path.dirname(__file__), '..', config['settings']['prompt'])
 
 # Ensure output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
