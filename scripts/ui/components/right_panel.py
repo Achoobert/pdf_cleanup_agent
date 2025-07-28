@@ -189,7 +189,7 @@ class RightPanel(BaseComponent):
         utility_layout.addWidget(separator)
         
         # Advanced buttons
-        prompt_editor_btn = QPushButton("Edit Prompts")
+        prompt_editor_btn = QPushButton("Edit Prompt")
         prompt_editor_btn.clicked.connect(self._on_edit_prompts_clicked)
         utility_layout.addWidget(prompt_editor_btn)
         
@@ -230,26 +230,36 @@ class RightPanel(BaseComponent):
         import subprocess
         import sys
         
-        # Get the data directory path
-        data_dir = os.path.join(os.getcwd(), "data")
-        
-        # Create directory if it doesn't exist
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir, exist_ok=True)
-            self._emit_status(f"Created data directory: {data_dir}")
-        
         try:
+            # Get the data directory path
+            data_dir = os.path.join(os.getcwd(), "data")
+            
+            # Create directory if it doesn't exist
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir, exist_ok=True)
+                self._emit_status(f"Created data directory: {data_dir}")
+            
             # Open directory in file manager
             if sys.platform == "win32":
                 os.startfile(data_dir)
             elif sys.platform == "darwin":  # macOS
-                subprocess.run(["open", data_dir])
+                subprocess.run(["open", data_dir], check=True)
             else:  # Linux
-                subprocess.run(["xdg-open", data_dir])
+                subprocess.run(["xdg-open", data_dir], check=True)
             
             self._emit_status(f"Opened data directory: {data_dir}")
+            
+        except subprocess.CalledProcessError as e:
+            self._emit_status(f"Failed to open data directory - subprocess error: {e}")
+        except FileNotFoundError as e:
+            self._emit_status(f"Failed to open data directory - file not found: {e}")
+        except PermissionError as e:
+            self._emit_status(f"Failed to open data directory - permission denied: {e}")
         except Exception as e:
-            self._emit_status(f"Failed to open data directory: {e}")
+            self._emit_status(f"Failed to open data directory - unexpected error: {e}")
+            # Log the full error for debugging
+            import traceback
+            self.logger.error(f"Data directory error: {traceback.format_exc()}")
             
     def _on_edit_prompts_clicked(self):
         """Handle edit prompts button click."""
@@ -257,13 +267,14 @@ class RightPanel(BaseComponent):
         import subprocess
         import sys
         
-        # Look for prompts file in data directory
-        prompts_file = os.path.join(os.getcwd(), "data", "prompts.txt")
-        
-        # Create default prompts file if it doesn't exist
-        if not os.path.exists(prompts_file):
-            os.makedirs(os.path.dirname(prompts_file), exist_ok=True)
-            default_prompts = """# PDF Processing Prompts
+        try:
+            # Look for prompts file in data directory
+            prompts_file = os.path.join(os.getcwd(), "data", "prompts.txt")
+            
+            # Create default prompts file if it doesn't exist
+            if not os.path.exists(prompts_file):
+                os.makedirs(os.path.dirname(prompts_file), exist_ok=True)
+                default_prompts = """# PDF Processing Prompts
 
 ## Default Prompt
 Please process this PDF content and extract the key information.
@@ -279,22 +290,31 @@ Please analyze this document and identify the key themes and insights.
 - Add new prompts by creating new sections with ## headers
 - Save the file when done
 """
-            with open(prompts_file, 'w', encoding='utf-8') as f:
-                f.write(default_prompts)
-            self._emit_status(f"Created default prompts file: {prompts_file}")
-        
-        try:
+                with open(prompts_file, 'w', encoding='utf-8') as f:
+                    f.write(default_prompts)
+                self._emit_status(f"Created default prompts file: {prompts_file}")
+            
             # Open prompts file in default text editor
             if sys.platform == "win32":
                 os.startfile(prompts_file)
             elif sys.platform == "darwin":  # macOS
-                subprocess.run(["open", prompts_file])
+                subprocess.run(["open", prompts_file], check=True)
             else:  # Linux
-                subprocess.run(["xdg-open", prompts_file])
+                subprocess.run(["xdg-open", prompts_file], check=True)
             
             self._emit_status(f"Opened prompts file: {prompts_file}")
+            
+        except subprocess.CalledProcessError as e:
+            self._emit_status(f"Failed to open prompts file - subprocess error: {e}")
+        except FileNotFoundError as e:
+            self._emit_status(f"Failed to open prompts file - file not found: {e}")
+        except PermissionError as e:
+            self._emit_status(f"Failed to open prompts file - permission denied: {e}")
         except Exception as e:
-            self._emit_status(f"Failed to open prompts file: {e}")
+            self._emit_status(f"Failed to open prompts file - unexpected error: {e}")
+            # Log the full error for debugging
+            import traceback
+            self.logger.error(f"Prompts file error: {traceback.format_exc()}")
             
     def _on_select_model_clicked(self):
         """Handle select model button click."""
@@ -302,48 +322,62 @@ Please analyze this document and identify the key themes and insights.
         import subprocess
         import sys
         
-        # Look for model config file in data directory
-        config_file = os.path.join(os.getcwd(), "data", "model_config.json")
-        
-        # Create default model config if it doesn't exist
-        if not os.path.exists(config_file):
-            os.makedirs(os.path.dirname(config_file), exist_ok=True)
-            default_config = """{
-    "model_settings": {
-        "default_model": "gpt-3.5-turbo",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "api_key": "your-api-key-here"
-    },
-    "available_models": [
-        "gpt-3.5-turbo",
-        "gpt-4",
-        "claude-3-sonnet",
-        "claude-3-haiku"
-    ],
-    "instructions": [
-        "Edit the default_model to change which model is used",
-        "Set your API key in the api_key field",
-        "Adjust temperature (0.0-1.0) for creativity level",
-        "Adjust max_tokens for response length"
-    ]
-}"""
-            with open(config_file, 'w', encoding='utf-8') as f:
-                f.write(default_config)
-            self._emit_status(f"Created default model config: {config_file}")
-        
         try:
+            # Look for model config file in data directory (YAML format)
+            config_file = os.path.join(os.getcwd(), "data", "model_config.yml")
+            
+            # Create default model config if it doesn't exist
+            if not os.path.exists(config_file):
+                os.makedirs(os.path.dirname(config_file), exist_ok=True)
+                default_config = """# Model Configuration
+# Edit this file to configure your AI model settings
+
+model_settings:
+  default_model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 2000
+  api_key: "your-api-key-here"
+
+available_models:
+  - "gpt-3.5-turbo"
+  - "gpt-4"
+  - "gpt-4-turbo"
+  - "claude-3-sonnet"
+  - "claude-3-haiku"
+  - "claude-3-opus"
+
+# Instructions:
+# - Edit the default_model to change which model is used
+# - Set your API key in the api_key field
+# - Adjust temperature (0.0-1.0) for creativity level (higher = more creative)
+# - Adjust max_tokens for response length (higher = longer responses)
+# - Save this file after making changes
+"""
+                with open(config_file, 'w', encoding='utf-8') as f:
+                    f.write(default_config)
+                self._emit_status(f"Created default model config: {config_file}")
+            
             # Open config file in default text editor
             if sys.platform == "win32":
                 os.startfile(config_file)
             elif sys.platform == "darwin":  # macOS
-                subprocess.run(["open", config_file])
+                subprocess.run(["open", config_file], check=True)
             else:  # Linux
-                subprocess.run(["xdg-open", config_file])
+                subprocess.run(["xdg-open", config_file], check=True)
             
             self._emit_status(f"Opened model config: {config_file}")
+            
+        except subprocess.CalledProcessError as e:
+            self._emit_status(f"Failed to open model config - subprocess error: {e}")
+        except FileNotFoundError as e:
+            self._emit_status(f"Failed to open model config - file not found: {e}")
+        except PermissionError as e:
+            self._emit_status(f"Failed to open model config - permission denied: {e}")
         except Exception as e:
-            self._emit_status(f"Failed to open model config: {e}")
+            self._emit_status(f"Failed to open model config - unexpected error: {e}")
+            # Log the full error for debugging
+            import traceback
+            self.logger.error(f"Model config error: {traceback.format_exc()}")
         
     def set_current_pdf(self, pdf_path: str):
         """
